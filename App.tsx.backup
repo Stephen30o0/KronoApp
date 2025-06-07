@@ -1,0 +1,72 @@
+import React from 'react';
+import { StatusBar, SafeAreaView, View, Text } from 'react-native';
+import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
+import { RootNavigator } from './src/navigation';
+import { NotificationProvider } from './src/context/NotificationContext';
+import { AuthProvider } from './src/context/AuthContext';
+import { ThemeProvider } from './src/context/ThemeContext';
+// Import from our simple JS file which is guaranteed to load
+const { COLORS } = require('./src/constants/appTheme');
+
+const App = () => {
+  // Basic error handling
+  const [hasError, setHasError] = React.useState(false);
+
+  // Create a hardcoded fallback theme in case everything else fails
+  const fallbackTheme = {
+    primary: '#A259FF',
+    background: '#0D0D11',
+    surface: '#1E1E2A',
+    textPrimary: '#FFFFFF',
+    textSecondary: '#B8B8C7',
+    divider: '#2A2A38',
+    secondary: '#FF6250'
+  };
+
+  // Use COLORS if available, otherwise use fallback
+  const safeColors = COLORS || fallbackTheme;
+
+  if (hasError) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#000' }}>
+        <Text style={{ color: '#fff', fontSize: 18 }}>There was an error loading the app</Text>
+      </View>
+    );
+  }
+
+  return (
+    <ThemeProvider>
+      {({ colors, isDarkMode }) => (
+        <NavigationContainer
+          theme={{
+            ...(isDarkMode ? DarkTheme : DefaultTheme),
+            colors: {
+              ...(isDarkMode ? DarkTheme.colors : DefaultTheme.colors),
+              primary: colors.primary,
+              background: colors.background,
+              card: colors.surface,
+              text: colors.textPrimary,
+              border: colors.divider,
+              notification: colors.secondary,
+            }
+          }}
+        >
+          <AuthProvider>
+            <NotificationProvider>
+              <StatusBar 
+                barStyle={isDarkMode ? "light-content" : "dark-content"} 
+                backgroundColor={colors.background} 
+                translucent={false}
+              />
+              <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+                <RootNavigator />
+              </SafeAreaView>
+            </NotificationProvider>
+          </AuthProvider>
+        </NavigationContainer>
+      )}
+    </ThemeProvider>
+  );
+};
+
+export default App;

@@ -1,0 +1,783 @@
+import React, { useState, useRef, useEffect } from 'react';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  TouchableOpacity, 
+  StatusBar,
+  FlatList,
+  Image,
+  Dimensions,
+  Platform,
+  Animated
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useNavigation, DrawerActions } from '@react-navigation/native';
+import { DrawerNavigationProp } from '@react-navigation/drawer';
+import { COLORS, FONTS, SIZES } from '../../constants/theme';
+import { InfinityLogo } from '../../components/common/InfinityLogo';
+
+// Comic book categories
+const CATEGORIES = [
+  { id: '1', name: 'Sci-Fi', icon: 'rocket' },
+  { id: '2', name: 'Fantasy', icon: 'flash' },
+  { id: '3', name: 'Superhero', icon: 'shield' },
+  { id: '4', name: 'Mystery', icon: 'eye' },
+  { id: '5', name: 'Horror', icon: 'skull' },
+  { id: '6', name: 'Romance', icon: 'heart' },
+  { id: '7', name: 'Action', icon: 'flame' },
+  { id: '8', name: 'Comedy', icon: 'happy' },
+];
+
+// Featured comics data
+const FEATURED_COMICS = [
+  {
+    id: '1',
+    title: 'Quantum Detectives',
+    subtitle: 'A Mystery in Multiple Dimensions',
+    creator: 'quantum_ink',
+    creatorAvatar: 'https://randomuser.me/api/portraits/women/44.jpg',
+    coverImage: 'https://images.unsplash.com/photo-1618519764620-7403abdbdfe9?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80',
+    chapters: 5,
+    rating: 4.8,
+    tags: ['Sci-Fi', 'Mystery', 'Noir'],
+    description: 'A noir detective story where the culprit exists in multiple quantum realities. Each chapter explores a different dimension where the same crime happened differently.',
+    isNew: true,
+  },
+  {
+    id: '2',
+    title: 'Galactic Explorers',
+    subtitle: 'First Contact Chronicles',
+    creator: 'cosmic_tales',
+    creatorAvatar: 'https://randomuser.me/api/portraits/men/45.jpg',
+    coverImage: 'https://images.unsplash.com/photo-1601513445506-2ab0d4fb4229?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80',
+    chapters: 8,
+    rating: 4.5,
+    tags: ['Sci-Fi', 'Space Opera', 'Adventure'],
+    description: 'Follow the journey of space explorers who discover ancient alien civilizations across the galaxy.',
+    isNew: false,
+  },
+  {
+    id: '3',
+    title: 'Neon Dreams',
+    subtitle: 'Digital Revolution',
+    creator: 'neon_artist',
+    creatorAvatar: 'https://randomuser.me/api/portraits/women/46.jpg',
+    coverImage: 'https://images.unsplash.com/photo-1633621412960-6df85eff8c85?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1374&q=80',
+    chapters: 12,
+    rating: 4.9,
+    tags: ['Cyberpunk', 'Dystopia', 'Action'],
+    description: 'Follow the story of a hacker in a dystopian future trying to bring down corrupt corporations.',
+    isNew: true,
+  },
+];
+
+// Trending series data
+const TRENDING_SERIES = [
+  {
+    id: '1',
+    title: 'Mystic Knights',
+    coverImage: 'https://images.unsplash.com/photo-1608889476561-6242cfdbf622?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=880&q=80',
+    creator: 'fantasy_lords',
+    rating: 4.7,
+    chapters: 15,
+    genre: 'Fantasy',
+    trending: '#1 in Fantasy',
+  },
+  {
+    id: '2',
+    title: 'Urban Legends',
+    coverImage: 'https://images.unsplash.com/photo-1530982011887-3cc11cc85693?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
+    creator: 'city_tales',
+    rating: 4.6,
+    chapters: 24,
+    genre: 'Horror',
+    trending: '#2 in Horror',
+  },
+  {
+    id: '3',
+    title: 'Cyber Ronin',
+    coverImage: 'https://images.unsplash.com/photo-1605379399642-870262d3d051?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2006&q=80',
+    creator: 'digital_samurai',
+    rating: 4.8,
+    chapters: 18,
+    genre: 'Sci-Fi',
+    trending: '#1 in Action',
+  },
+  {
+    id: '4',
+    title: 'Dimension X',
+    coverImage: 'https://images.unsplash.com/photo-1620336655055-088d06e36bf0?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=987&q=80',
+    creator: 'reality_shifter',
+    rating: 4.5,
+    chapters: 10,
+    genre: 'Sci-Fi',
+    trending: '#3 in Sci-Fi',
+  },
+];
+
+// Spotlight creators data
+const SPOTLIGHT_CREATORS = [
+  {
+    id: '1',
+    name: 'Emily Chen',
+    handle: '@quantum_ink',
+    avatar: 'https://randomuser.me/api/portraits/women/44.jpg',
+    followers: '24.5K',
+    bio: 'Sci-fi comic artist and quantum physics enthusiast',
+    comicCount: 8,
+    featured: 'Quantum Detectives',
+    isVerified: true,
+  },
+  {
+    id: '2',
+    name: 'Marcus Johnson',
+    handle: '@cosmic_tales',
+    avatar: 'https://randomuser.me/api/portraits/men/45.jpg',
+    followers: '18.2K',
+    bio: 'Space opera and sci-fi worldbuilding specialist',
+    comicCount: 12,
+    featured: 'Galactic Explorers',
+    isVerified: true,
+  },
+  {
+    id: '3',
+    name: 'Sofia Rodriguez',
+    handle: '@neon_artist',
+    avatar: 'https://randomuser.me/api/portraits/women/46.jpg',
+    followers: '32.7K',
+    bio: 'Cyberpunk artist and dystopian storyteller',
+    comicCount: 15,
+    featured: 'Neon Dreams',
+    isVerified: true,
+  },
+];
+
+// New Releases data
+const NEW_RELEASES = [
+  {
+    id: '1',
+    title: 'The Last Guardian',
+    chapter: 'Chapter 4',
+    coverImage: 'https://images.unsplash.com/photo-1534809027769-b00d750a6bac?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=987&q=80',
+    releaseDate: '2 hours ago',
+    creator: 'mystic_artist',
+    creatorAvatar: 'https://randomuser.me/api/portraits/women/22.jpg',
+  },
+  {
+    id: '2',
+    title: 'Cyber Ronin',
+    chapter: 'Chapter 18',
+    coverImage: 'https://images.unsplash.com/photo-1605379399642-870262d3d051?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2006&q=80',
+    releaseDate: '1 day ago',
+    creator: 'digital_samurai',
+    creatorAvatar: 'https://randomuser.me/api/portraits/men/32.jpg',
+  },
+  {
+    id: '3',
+    title: 'Quantum Detectives',
+    chapter: 'Chapter 5',
+    coverImage: 'https://images.unsplash.com/photo-1618519764620-7403abdbdfe9?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80',
+    releaseDate: '2 days ago',
+    creator: 'quantum_ink',
+    creatorAvatar: 'https://randomuser.me/api/portraits/women/44.jpg',
+  },
+  {
+    id: '4',
+    title: 'Urban Legends',
+    chapter: 'Chapter 24',
+    coverImage: 'https://images.unsplash.com/photo-1530982011887-3cc11cc85693?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
+    releaseDate: '3 days ago',
+    creator: 'city_tales',
+    creatorAvatar: 'https://randomuser.me/api/portraits/men/28.jpg',
+  },
+];
+
+const { width } = Dimensions.get('window');
+
+// Define the type for the drawer navigation
+type DrawerParamList = {
+  Home: undefined;
+  Library: undefined;
+  TownSquare: undefined;
+  Stream: undefined;
+  Wallet: undefined;
+  Profile: undefined;
+  Messages: undefined;
+};
+
+type FeaturedComic = {
+  id: string;
+  title: string;
+  subtitle: string;
+  creator: string;
+  creatorAvatar: string;
+  coverImage: string;
+  chapters: number;
+  rating: number;
+  tags: string[];
+  description: string;
+  isNew: boolean;
+};
+
+type TrendingSeries = {
+  id: string;
+  title: string;
+  coverImage: string;
+  creator: string;
+  rating: number;
+  chapters: number;
+  genre: string;
+  trending: string;
+};
+
+type SpotlightCreator = {
+  id: string;
+  name: string;
+  handle: string;
+  avatar: string;
+  followers: string;
+  bio: string;
+  comicCount: number;
+  featured: string;
+  isVerified: boolean;
+};
+
+type NewRelease = {
+  id: string;
+  title: string;
+  chapter: string;
+  coverImage: string;
+  releaseDate: string;
+  creator: string;
+  creatorAvatar: string;
+};
+
+type Category = {
+  id: string;
+  name: string;
+  icon: string;
+};
+
+// Define types for posts and stories
+interface Post {
+  id: string;
+  username: string;
+  caption: string;
+  tags: string[];
+  comments: number;
+  likes: number;
+  timestamp: string;
+  isLiked?: boolean;
+  isBookmarked?: boolean;
+}
+
+interface Story {
+  id: string;
+  username: string;
+  avatar: string;
+  hasUnviewedStory: boolean;
+}
+
+// Mock data for posts and stories
+const posts: Post[] = [
+  {
+    id: '1',
+    username: 'komix_adventures',
+    caption: 'Just finished the latest issue! What do you think?',
+    tags: ['#comics', '#artwork', '#newrelease'],
+    comments: 42,
+    likes: 187,
+    timestamp: '2 hours ago',
+    isLiked: false,
+    isBookmarked: false
+  },
+  {
+    id: '2',
+    username: 'inkmaster',
+    caption: 'Working on some character concepts for my new series.',
+    tags: ['#characterdesign', '#workinprogress', '#comicart'],
+    comments: 23,
+    likes: 156,
+    timestamp: '4 hours ago',
+    isLiked: true,
+    isBookmarked: true
+  },
+  {
+    id: '3',
+    username: 'colorpalette',
+    caption: 'Color palette exploration for the dystopian cityscape.',
+    tags: ['#colors', '#digitalart', '#conceptart'],
+    comments: 18,
+    likes: 104,
+    timestamp: '1 day ago',
+    isLiked: false,
+    isBookmarked: false
+  }
+];
+
+const STORIES: Story[] = [
+  { id: '1', username: 'You', avatar: '', hasUnviewedStory: false },
+  { id: '2', username: 'quantum_ink', avatar: 'https://randomuser.me/api/portraits/women/44.jpg', hasUnviewedStory: true },
+  { id: '3', username: 'cosmic_tales', avatar: 'https://randomuser.me/api/portraits/men/32.jpg', hasUnviewedStory: true },
+  { id: '4', username: 'neon_creator', avatar: 'https://randomuser.me/api/portraits/women/68.jpg', hasUnviewedStory: false },
+  { id: '5', username: 'pixel_master', avatar: 'https://randomuser.me/api/portraits/men/75.jpg', hasUnviewedStory: true },
+  { id: '6', username: 'ink_whisperer', avatar: 'https://randomuser.me/api/portraits/women/89.jpg', hasUnviewedStory: false },
+  { id: '7', username: 'panel_wizard', avatar: 'https://randomuser.me/api/portraits/men/26.jpg', hasUnviewedStory: false },
+];
+
+const HomeScreen = () => {
+  const navigation = useNavigation<DrawerNavigationProp<DrawerParamList>>();
+  const [activeCategory, setActiveCategory] = useState<string>('1'); // Default to Sci-Fi
+  const [featuredIndex, setFeaturedIndex] = useState(0);
+  const [localPosts, setLocalPosts] = useState<Post[]>(posts); // Initialize localPosts state with posts data
+  const scrollX = useRef(new Animated.Value(0)).current;
+  
+  // Refs for animated scrolling
+  const featuredRef = useRef<FlatList>(null);
+  
+  useEffect(() => {
+    // Auto-scroll through featured comics every 5 seconds
+    const interval = setInterval(() => {
+      if (featuredRef.current) {
+        const nextIndex = (featuredIndex + 1) % FEATURED_COMICS.length;
+        featuredRef.current.scrollToIndex({
+          index: nextIndex,
+          animated: true
+        });
+        setFeaturedIndex(nextIndex);
+      }
+    }, 5000);
+    
+    return () => clearInterval(interval);
+  }, [featuredIndex]);
+  
+  const openDrawer = () => {
+    navigation.dispatch(DrawerActions.openDrawer());
+  };
+
+  const navigateToSearch = () => {
+    console.log('Navigate to search');
+  };
+  
+  const navigateToComicDetail = (comicId: string) => {
+    console.log('Navigate to comic detail:', comicId);
+  };
+  
+  const navigateToCreatorProfile = (creatorId: string) => {
+    console.log('Navigate to creator profile:', creatorId);
+  };
+  
+  const navigateToCategory = (categoryId: string) => {
+    setActiveCategory(categoryId);
+    console.log('Navigate to category:', categoryId);
+  };
+  
+  const handleFeaturedScroll = Animated.event(
+    [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+    { useNativeDriver: false }
+  );
+  
+  const renderHeader = () => (
+    <View style={styles.header}>
+      <TouchableOpacity onPress={openDrawer}>
+        <Ionicons name="menu-outline" size={28} color={COLORS.textPrimary} />
+      </TouchableOpacity>
+      
+      <View style={styles.logoContainer}>
+        <Text style={styles.appTitle}>KronoLabs</Text>
+      </View>
+      
+      <TouchableOpacity onPress={navigateToSearch}>
+        <Ionicons name="search-outline" size={24} color={COLORS.textPrimary} />
+      </TouchableOpacity>
+    </View>
+  );
+
+  const renderCategories = () => (
+    <View style={styles.categoryContainer}>
+      <FlatList
+        data={CATEGORIES}
+        keyExtractor={(item) => item.id}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.categoryList}
+        renderItem={({ item }) => (
+          <TouchableOpacity 
+            style={[
+              styles.categoryItem,
+              activeCategory === item.id && styles.activeCategoryItem
+            ]}
+            onPress={() => navigateToCategory(item.id)}
+          >
+            <Ionicons 
+              name={item.icon as any} 
+              size={18} 
+              color={activeCategory === item.id ? COLORS.white : COLORS.textSecondary}
+              style={styles.categoryIcon}
+            />
+            <Text style={[
+              styles.categoryText,
+              activeCategory === item.id && styles.activeCategoryText
+            ]}>
+              {item.name}
+            </Text>
+          </TouchableOpacity>
+        )}
+      />
+    </View>
+  );
+
+  // Handle like, comment, and bookmark functionalities
+  const handleLike = (id: string) => {
+    // Toggle like status
+    setLocalPosts(prevPosts => 
+      prevPosts.map(post => {
+        if (post.id === id) {
+          const isLiked = !post.isLiked;
+          const likeDelta = isLiked ? 1 : -1;
+          return {
+            ...post,
+            isLiked,
+            likes: post.likes + likeDelta
+          };
+        }
+        return post;
+      })
+    );
+  };
+  
+  const handleComment = (id: string) => {
+    console.log('Comment pressed:', id);
+    // In a real app, this would navigate to comments screen
+  };
+  
+  const handleBookmark = (id: string) => {
+    // Toggle bookmark status
+    setLocalPosts(prevPosts => 
+      prevPosts.map(post => {
+        if (post.id === id) {
+          return {
+            ...post,
+            isBookmarked: !post.isBookmarked
+          };
+        }
+        return post;
+      })
+    );
+  };
+
+  // Render function for story items
+  const renderStoryItem = ({ item }: { item: Story }) => (
+    <TouchableOpacity style={styles.storyItem}>
+      <View style={[styles.storyRing, item.hasUnviewedStory && styles.activeStoryRing]}>
+        <View style={styles.storyAvatar}>
+          {item.avatar ? (
+            <Image source={{ uri: item.avatar }} style={styles.storyAvatarImage} />
+          ) : (
+            <Text style={styles.storyAvatarText}>{item.username.charAt(0).toUpperCase()}</Text>
+          )}
+        </View>
+      </View>
+      <Text style={styles.storyUsername} numberOfLines={1}>
+        {item.username}
+      </Text>
+    </TouchableOpacity>
+  );
+
+  // Render function for post items
+  const renderPostItem = ({ item }: { item: Post }) => (
+    <View style={styles.postContainer}>
+      <View style={styles.postHeader}>
+        <View style={styles.postHeaderLeft}>
+          <View style={styles.postAvatar}>
+            <Text style={styles.postAvatarText}>{item.username.charAt(0).toUpperCase()}</Text>
+          </View>
+          <View style={styles.usernameContainer}>
+            <Text style={styles.postUsername}>{item.username}</Text>
+          </View>
+        </View>
+        <TouchableOpacity>
+          <Ionicons name="ellipsis-horizontal" size={20} color={COLORS.textSecondary} />
+        </TouchableOpacity>
+      </View>
+      
+      <Text style={styles.postCaption}>{item.caption}</Text>
+      
+      <View style={styles.postTags}>
+        {item.tags.map((tag, index) => (
+          <TouchableOpacity key={index}>
+            <Text style={styles.postTag}>{tag}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+      <View style={styles.postStats}>
+        <TouchableOpacity 
+          style={styles.postStatButton}
+          onPress={() => handleLike(item.id)}
+        >
+          <Ionicons 
+            name={item.isLiked ? "heart" : "heart-outline"} 
+            size={22} 
+            color={item.isLiked ? COLORS.accent1 : COLORS.textSecondary} 
+          />
+          <Text style={styles.postStatText}>{item.likes}</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={styles.postStatButton}
+          onPress={() => handleComment(item.id)}
+        >
+          <Ionicons name="chatbubble-outline" size={20} color={COLORS.textSecondary} />
+          <Text style={styles.postStatText}>{item.comments}</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={styles.postStatButton}
+          onPress={() => handleBookmark(item.id)}
+        >
+          <Ionicons 
+            name={item.isBookmarked ? "bookmark" : "bookmark-outline"} 
+            size={20} 
+            color={item.isBookmarked ? COLORS.primary : COLORS.textSecondary} 
+          />
+        </TouchableOpacity>
+        
+        <View style={{ flex: 1 }} />
+        
+        <Text style={styles.postTimestamp}>{item.timestamp}</Text>
+      </View>
+    </View>
+  );
+
+  return (
+    <View style={styles.container}>
+      <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
+      
+      <View style={styles.header}>
+        <TouchableOpacity onPress={openDrawer}>
+          <Ionicons name="menu" size={28} color={COLORS.textPrimary} />
+        </TouchableOpacity>
+        
+        <InfinityLogo size={40} color={COLORS.primary} />
+        
+        <View style={styles.headerRight}>
+          <TouchableOpacity style={styles.headerIconButton}>
+            <Ionicons name="add-circle" size={28} color={COLORS.primary} />
+          </TouchableOpacity>
+        </View>
+      </View>
+      
+      <FlatList
+        data={localPosts}
+        keyExtractor={item => item.id}
+        renderItem={renderPostItem}
+        showsVerticalScrollIndicator={false}
+        ListHeaderComponent={
+          <>
+            <View style={styles.storiesContainer}>
+              <FlatList
+                data={STORIES}
+                keyExtractor={item => item.id}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.storiesList}
+                renderItem={renderStoryItem}
+              />
+            </View>
+          </>
+        }
+      />
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  // Base Containers
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: SIZES.statusBarHeight + 10,
+    paddingHorizontal: 16,
+    paddingBottom: 10,
+    backgroundColor: COLORS.backgroundDark,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerIconButton: {
+    marginLeft: 16,
+  },
+  storiesContainer: {
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  storiesList: {
+    paddingHorizontal: 12,
+  },
+  storyItem: {
+    alignItems: 'center',
+    marginHorizontal: 8,
+    width: 80,
+  },
+  storyRing: {
+    padding: 2,
+    borderRadius: 50,
+    borderWidth: 2,
+    borderColor: COLORS.border,
+  },
+  activeStoryRing: {
+    borderColor: COLORS.primary,
+  },
+  storyAvatar: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: COLORS.backgroundLight,
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+  storyAvatarImage: {
+    width: 60,
+    height: 60,
+  },
+  storyAvatarText: {
+    ...FONTS.bold,
+    fontSize: 24,
+    color: COLORS.primary,
+  },
+  storyUsername: {
+    ...FONTS.medium,
+    fontSize: 12,
+    color: COLORS.textPrimary,
+    marginTop: 4,
+    textAlign: 'center',
+  },
+  postContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  postHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  postHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  postAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: COLORS.backgroundLight,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  postAvatarText: {
+    ...FONTS.bold,
+    fontSize: 16,
+    color: COLORS.primary,
+  },
+  usernameContainer: {
+    marginLeft: 12,
+  },
+  postUsername: {
+    ...FONTS.semiBold,
+    fontSize: 14,
+    color: COLORS.textPrimary,
+  },
+  postCaption: {
+    ...FONTS.regular,
+    fontSize: 14,
+    color: COLORS.textPrimary,
+    marginBottom: 8,
+  },
+  postTags: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: 12,
+  },
+  postTag: {
+    ...FONTS.medium,
+    fontSize: 14,
+    color: COLORS.primary,
+    marginRight: 8,
+  },
+  postStats: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  postStatButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  postStatText: {
+    ...FONTS.medium,
+    fontSize: 14,
+    color: COLORS.textSecondary,
+    marginLeft: 4,
+  },
+  postTimestamp: {
+    ...FONTS.regular,
+    fontSize: 12,
+    color: COLORS.textTertiary,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  
+  // Header Styles
+  logoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  appTitle: {
+    ...FONTS.h2,
+    color: COLORS.textPrimary,
+    marginLeft: 8,
+  },
+  categoryContainer: {
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  categoryList: {
+    paddingLeft: 16,
+  },
+  categoryItem: {
+    marginRight: 12,
+    borderRadius: 20,
+    backgroundColor: COLORS.surface,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  activeCategoryItem: {
+    backgroundColor: COLORS.primary,
+  },
+  categoryIcon: {
+    marginRight: 6,
+  },
+  categoryText: {
+    ...FONTS.body2,
+    color: COLORS.textSecondary,
+  },
+  activeCategoryText: {
+    color: COLORS.textPrimary,
+  }
+});
+
+export default HomeScreen;
