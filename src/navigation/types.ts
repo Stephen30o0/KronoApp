@@ -19,6 +19,27 @@ export type RootStackParamList = {
   EditProfile: undefined;
   FollowersList: { userId: string };
   FollowingList: { userId: string };
+  PostDetailScreen: { post: {
+    id: string;
+    username: string;
+    avatar: string;
+    caption: string;
+    tags?: string[];
+    comments: number;
+    likes: number;
+    timestamp: string;
+    isLiked: boolean;
+    isBookmarked: boolean;
+    imageUrl?: string;
+  }};
+  Details: { streamId: string };
+  History: undefined;
+  GoLive: undefined;
+  WatchParty: { streamTitle: string };
+  Settings: undefined;
+  NewProject: undefined;
+  Analytics: undefined;
+  Payouts: undefined;
 };
 
 export type AuthStackParamList = {
@@ -50,10 +71,20 @@ export type DrawerParamList = {
   Bookmarks: undefined;
   Wallet: undefined;
   Support: undefined;
-  Settings: undefined;
+};
+
+export type ChatItem = {
+  id: string;
+  userName: string;
+  userAvatar: string;
+  lastMessage: string;
+  time: string;
+  unread: number;
+  isGroup?: boolean;
 };
 
 export type MessagesStackParamList = {
   MessagesList: undefined;
-  Chat: { chatId: string; userName: string; userAvatar: string };
+  Chat: { chatId: string; userName: string; userAvatar: string; isGroup?: boolean };
+  NewChat: undefined;
 };

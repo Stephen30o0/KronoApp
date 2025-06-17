@@ -1,662 +1,505 @@
-import React, { useState, useRef } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  TouchableOpacity, 
-  FlatList, 
-  Image, 
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  TextInput,
+  FlatList,
+  Image,
+  Modal,
+  Animated as RNAnimated,
+  PanResponder,
+  Platform,
   StatusBar,
-  ScrollView,
   Dimensions,
-  Platform
 } from 'react-native';
-import { useNavigation, DrawerActions } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import * as Animatable from 'react-native-animatable';
-import { COLORS, FONTS, SIZES, SHADOWS } from '../../constants/theme';
-import ComicDetailModal from '../../components/library/ComicDetailModal';
+import Logo from '../../components/common/Logo';
+import { useNavigation, DrawerActions } from '@react-navigation/native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
-const { width } = Dimensions.get('window');
-const CARD_WIDTH = (width - 48) / 2;
-const CARD_HEIGHT = CARD_WIDTH * 1.5;
+// Constants
+const COLORS = { black: '#000', white: '#fff', text: '#fff', accent: '#ff4081', gray: '#bbb', darkGray: '#222', lightGray: '#333', background: '#121212' };
+const SIZES = { padding: 16, borderRadius: 12 };
 
-// Mock data for categories
-const CATEGORIES = [
-  {
-    id: 'recently_added',
-    title: 'Recently Added',
-    comics: [
-      {
-        id: '1',
-        title: 'Quantum Detectives',
-        creator: 'quantum_ink',
-        creatorAvatar: 'https://randomuser.me/api/portraits/women/44.jpg',
-        cover: 'https://images.unsplash.com/photo-1618519764620-7403abdbdfe9?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80',
-        rating: 4.8,
-        likes: 1245,
-        datePosted: '2d ago',
-        isLiked: false,
-      },
-      {
-        id: '2',
-        title: 'Neon Dreams',
-        creator: 'neon_artist',
-        creatorAvatar: 'https://randomuser.me/api/portraits/women/46.jpg',
-        cover: 'https://images.unsplash.com/photo-1633621412960-6df85eff8c85?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1374&q=80',
-        rating: 4.5,
-        likes: 2103,
-        datePosted: '1w ago',
-        isLiked: true,
-      },
-      {
-        id: '3',
-        title: 'Space Explorers',
-        creator: 'cosmic_tales',
-        creatorAvatar: 'https://randomuser.me/api/portraits/men/45.jpg',
-        cover: 'https://images.unsplash.com/photo-1601513445506-2ab0d4fb4229?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80',
-        rating: 4.2,
-        likes: 876,
-        datePosted: '2w ago',
-        isLiked: false,
-      },
-      {
-        id: '4',
-        title: 'Cyber Chronicles',
-        creator: 'cyber_comics',
-        creatorAvatar: 'https://randomuser.me/api/portraits/men/47.jpg',
-        cover: 'https://images.unsplash.com/photo-1614064641938-3bbee52942c7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80',
-        rating: 4.0,
-        likes: 542,
-        datePosted: '3w ago',
-        isLiked: false,
-      },
-    ],
-  },
-  {
-    id: 'sci_fi',
-    title: 'Sci-Fi',
-    comics: [
-      {
-        id: '5',
-        title: 'Quantum Detectives',
-        creator: 'quantum_ink',
-        creatorAvatar: 'https://randomuser.me/api/portraits/women/44.jpg',
-        cover: 'https://images.unsplash.com/photo-1618519764620-7403abdbdfe9?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80',
-        rating: 4.8,
-        likes: 1245,
-        datePosted: '2d ago',
-        isLiked: false,
-      },
-      {
-        id: '6',
-        title: 'Space Explorers',
-        creator: 'cosmic_tales',
-        creatorAvatar: 'https://randomuser.me/api/portraits/men/45.jpg',
-        cover: 'https://images.unsplash.com/photo-1601513445506-2ab0d4fb4229?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80',
-        rating: 4.2,
-        likes: 876,
-        datePosted: '2w ago',
-        isLiked: false,
-      },
-      {
-        id: '7',
-        title: 'Galactic Odyssey',
-        creator: 'star_writer',
-        creatorAvatar: 'https://randomuser.me/api/portraits/women/42.jpg',
-        cover: 'https://images.unsplash.com/photo-1581822261290-991b38693d16?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80',
-        rating: 4.6,
-        likes: 1023,
-        datePosted: '1m ago',
-        isLiked: true,
-      },
-      {
-        id: '8',
-        title: 'Time Paradox',
-        creator: 'future_comics',
-        creatorAvatar: 'https://randomuser.me/api/portraits/men/43.jpg',
-        cover: 'https://images.unsplash.com/photo-1501432377862-3b0432b87a14?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1374&q=80',
-        rating: 4.3,
-        likes: 789,
-        datePosted: '2m ago',
-        isLiked: false,
-      },
-    ],
-  },
-  {
-    id: 'fantasy',
-    title: 'Fantasy',
-    comics: [
-      {
-        id: '9',
-        title: 'Dragon Realms',
-        creator: 'myth_maker',
-        creatorAvatar: 'https://randomuser.me/api/portraits/women/41.jpg',
-        cover: 'https://images.unsplash.com/photo-1590859808308-3d2d9c515b1a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1374&q=80',
-        rating: 4.7,
-        likes: 1567,
-        datePosted: '5d ago',
-        isLiked: true,
-      },
-      {
-        id: '10',
-        title: 'Enchanted Forest',
-        creator: 'magic_artist',
-        creatorAvatar: 'https://randomuser.me/api/portraits/men/41.jpg',
-        cover: 'https://images.unsplash.com/photo-1518640467707-6811f4a6ab73?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1480&q=80',
-        rating: 4.4,
-        likes: 987,
-        datePosted: '1w ago',
-        isLiked: false,
-      },
-      {
-        id: '11',
-        title: "Wizard's Journey",
-        creator: 'spell_caster',
-        creatorAvatar: 'https://randomuser.me/api/portraits/women/40.jpg',
-        cover: 'https://images.unsplash.com/photo-1519074069444-1ba4fff66d16?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1374&q=80',
-        rating: 4.1,
-        likes: 654,
-        datePosted: '2w ago',
-        isLiked: false,
-      },
-      {
-        id: '12',
-        title: 'Mythical Creatures',
-        creator: 'legend_comics',
-        creatorAvatar: 'https://randomuser.me/api/portraits/men/40.jpg',
-        cover: 'https://images.unsplash.com/photo-1560942485-b2a11cc13456?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1374&q=80',
-        rating: 4.5,
-        likes: 876,
-        datePosted: '3w ago',
-        isLiked: true,
-      },
-    ],
-  },
-  {
-    id: 'cyberpunk',
-    title: 'Cyberpunk',
-    comics: [
-      {
-        id: '13',
-        title: 'Neon Dreams',
-        creator: 'neon_artist',
-        creatorAvatar: 'https://randomuser.me/api/portraits/women/46.jpg',
-        cover: 'https://images.unsplash.com/photo-1633621412960-6df85eff8c85?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1374&q=80',
-        rating: 4.5,
-        likes: 2103,
-        datePosted: '1w ago',
-        isLiked: true,
-      },
-      {
-        id: '14',
-        title: 'Cyber Chronicles',
-        creator: 'cyber_comics',
-        creatorAvatar: 'https://randomuser.me/api/portraits/men/47.jpg',
-        cover: 'https://images.unsplash.com/photo-1614064641938-3bbee52942c7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80',
-        rating: 4.0,
-        likes: 542,
-        datePosted: '3w ago',
-        isLiked: false,
-      },
-      {
-        id: '15',
-        title: 'Digital Dystopia',
-        creator: 'future_noir',
-        creatorAvatar: 'https://randomuser.me/api/portraits/women/39.jpg',
-        cover: 'https://images.unsplash.com/photo-1515879218367-8466d910aaa4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1469&q=80',
-        rating: 4.3,
-        likes: 876,
-        datePosted: '1m ago',
-        isLiked: false,
-      },
-      {
-        id: '16',
-        title: "Hacker's Code",
-        creator: 'digital_artist',
-        creatorAvatar: 'https://randomuser.me/api/portraits/men/39.jpg',
-        cover: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80',
-        rating: 4.2,
-        likes: 765,
-        datePosted: '2m ago',
-        isLiked: true,
-      },
-    ],
-  },
-  {
-    id: 'watched',
-    title: 'Recently Watched',
-    comics: [
-      {
-        id: '17',
-        title: 'Quantum Detectives',
-        creator: 'quantum_ink',
-        creatorAvatar: 'https://randomuser.me/api/portraits/women/44.jpg',
-        cover: 'https://images.unsplash.com/photo-1618519764620-7403abdbdfe9?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80',
-        rating: 4.8,
-        likes: 1245,
-        datePosted: '2d ago',
-        isLiked: false,
-      },
-      {
-        id: '18',
-        title: 'Dragon Realms',
-        creator: 'myth_maker',
-        creatorAvatar: 'https://randomuser.me/api/portraits/women/41.jpg',
-        cover: 'https://images.unsplash.com/photo-1590859808308-3d2d9c515b1a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1374&q=80',
-        rating: 4.7,
-        likes: 1567,
-        datePosted: '5d ago',
-        isLiked: true,
-      },
-      {
-        id: '19',
-        title: 'Neon Dreams',
-        creator: 'neon_artist',
-        creatorAvatar: 'https://randomuser.me/api/portraits/women/46.jpg',
-        cover: 'https://images.unsplash.com/photo-1633621412960-6df85eff8c85?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1374&q=80',
-        rating: 4.5,
-        likes: 2103,
-        datePosted: '1w ago',
-        isLiked: true,
-      },
-      {
-        id: '20',
-        title: 'Space Explorers',
-        creator: 'cosmic_tales',
-        creatorAvatar: 'https://randomuser.me/api/portraits/men/45.jpg',
-        cover: 'https://images.unsplash.com/photo-1601513445506-2ab0d4fb4229?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80',
-        rating: 4.2,
-        likes: 876,
-        datePosted: '2w ago',
-        isLiked: false,
-      },
-    ],
-  },
-];
-
-type Comic = {
+// Types
+interface Comic {
   id: string;
   title: string;
   creator: string;
-  creatorAvatar: string;
-  cover: string;
-  rating: number;
+  cover: { uri: string };
   likes: number;
-  datePosted: string;
-  isLiked: boolean;
-};
+  stars: number;
+  profilePic: string;
+  genre: string;
+}
 
-type Category = {
-  id: string;
-  title: string;
-  comics: Comic[];
-};
+// Mock Data
+const comicsData: Comic[] = [
+  { id: '1', title: 'Quantum Detectives', creator: 'quantum_ink', cover: { uri: 'https://images.unsplash.com/photo-1618519764620-7403abdbdfe9?auto=format&fit=crop&w=800&q=80' }, likes: 1245, stars: 300, profilePic: 'https://randomuser.me/api/portraits/men/11.jpg', genre: 'Mystery' },
+  { id: '2', title: 'Neon Dreams', creator: 'neon_artist', cover: { uri: 'https://images.unsplash.com/photo-1633621412960-6df85eff8c85?auto=format&fit=crop&w=800&q=80' }, likes: 2103, stars: 540, profilePic: 'https://randomuser.me/api/portraits/women/12.jpg', genre: 'Sci-Fi' },
+  { id: '3', title: 'Galactic Odyssey', creator: 'star_writer', cover: { uri: 'https://images.unsplash.com/photo-1581822261290-991b38693d16?auto=format&fit=crop&w=800&q=80' }, likes: 1023, stars: 210, profilePic: 'https://randomuser.me/api/portraits/men/13.jpg', genre: 'Adventure' },
+  { id: '4', title: 'Cybernetic Souls', creator: 'cyborg_dreams', cover: { uri: 'https://images.unsplash.com/photo-1593349328229-11c8a1435a2a?auto=format&fit=crop&w=800&q=80' }, likes: 5600, stars: 1200, profilePic: 'https://randomuser.me/api/portraits/women/14.jpg', genre: 'Sci-Fi' },
+  { id: '5', title: 'Forgotten Realms', creator: 'ancient_scribes', cover: { uri: 'https://images.unsplash.com/photo-1542848329-42523415536d?auto=format&fit=crop&w=800&q=80' }, likes: 3210, stars: 800, profilePic: 'https://randomuser.me/api/portraits/men/15.jpg', genre: 'Fantasy' },
+  { id: '6', title: 'Midnight Gospel', creator: 'cosmic_thinker', cover: { uri: 'https://images.unsplash.com/photo-1614728263952-84ea256ec346?auto=format&fit=crop&w=800&q=80' }, likes: 4800, stars: 950, profilePic: 'https://randomuser.me/api/portraits/women/16.jpg', genre: 'Supernatural' },
+  { id: '7', title: 'Solar Flare', creator: 'sun_artist', cover: { uri: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80' }, likes: 1670, stars: 420, profilePic: 'https://randomuser.me/api/portraits/men/17.jpg', genre: 'Action' },
+  { id: '8', title: 'Night Watchers', creator: 'owl_writer', cover: { uri: 'https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=800&q=80' }, likes: 1890, stars: 510, profilePic: 'https://randomuser.me/api/portraits/women/18.jpg', genre: 'Crime' },
+  { id: '9', title: 'Mystic Forest', creator: 'forest_queen', cover: { uri: 'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=800&q=80' }, likes: 990, stars: 180, profilePic: 'https://randomuser.me/api/portraits/men/19.jpg', genre: 'Fantasy' },
+  { id: '10', title: 'Red Horizon', creator: 'horizon_artist', cover: { uri: 'https://images.unsplash.com/photo-1519125323398-675f0ddb6308?auto=format&fit=crop&w=800&q=80' }, likes: 2201, stars: 600, profilePic: 'https://randomuser.me/api/portraits/women/20.jpg', genre: 'Thriller' },
+  { id: '11', title: 'Dragon’s Path', creator: 'dragon_scribe', cover: { uri: 'https://images.unsplash.com/photo-1516979187457-637abb4f9353?auto=format&fit=crop&w=800&q=80' }, likes: 1333, stars: 350, profilePic: 'https://randomuser.me/api/portraits/men/21.jpg', genre: 'Adventure' },
+  { id: '12', title: 'Blue City', creator: 'urban_artist', cover: { uri: 'https://images.unsplash.com/photo-1465101178521-c1a9136a3b41?auto=format&fit=crop&w=800&q=80' }, likes: 1782, stars: 490, profilePic: 'https://randomuser.me/api/portraits/women/22.jpg', genre: 'Crime' },
+  { id: '13', title: 'Parallel Lines', creator: 'line_master', cover: { uri: 'https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=800&q=80' }, likes: 1422, stars: 330, profilePic: 'https://randomuser.me/api/portraits/men/23.jpg', genre: 'Drama' },
+  { id: '14', title: 'Lost in Neon', creator: 'neon_queen', cover: { uri: 'https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=800&q=80' }, likes: 1999, stars: 590, profilePic: 'https://randomuser.me/api/portraits/women/24.jpg', genre: 'Thriller' },
+  { id: '15', title: 'Desert Mirage', creator: 'mirage_artist', cover: { uri: 'https://images.unsplash.com/photo-1519125323398-675f0ddb6308?auto=format&fit=crop&w=800&q=80' }, likes: 1545, stars: 410, profilePic: 'https://randomuser.me/api/portraits/men/25.jpg', genre: 'Slice of Life' },
+  { id: '16', title: 'Skybound', creator: 'sky_writer', cover: { uri: 'https://images.unsplash.com/photo-1465101178521-c1a9136a3b41?auto=format&fit=crop&w=800&q=80' }, likes: 2100, stars: 570, profilePic: 'https://randomuser.me/api/portraits/women/26.jpg', genre: 'Drama' },
+  { id: '17', title: 'Jungle Beat', creator: 'beat_master', cover: { uri: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80' }, likes: 1320, stars: 320, profilePic: 'https://randomuser.me/api/portraits/men/27.jpg', genre: 'Comedy' },
+  { id: '18', title: 'Frozen Dawn', creator: 'ice_artist', cover: { uri: 'https://images.unsplash.com/photo-1516979187457-637abb4f9353?auto=format&fit=crop&w=800&q=80' }, likes: 1888, stars: 490, profilePic: 'https://randomuser.me/api/portraits/women/28.jpg', genre: 'Horror' },
+];
+
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../../navigation/types';
 
 const LibraryScreen = () => {
-  const navigation = useNavigation<any>();
-  const [activeCategory, setActiveCategory] = useState(CATEGORIES[0].id);
-  const [comics, setComics] = useState<Category[]>(CATEGORIES);
-  const [selectedComic, setSelectedComic] = useState<Comic | null>(null);
-  const [detailModalVisible, setDetailModalVisible] = useState(false);
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [previewComic, setPreviewComic] = useState<Comic | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
+  const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
+  const genres = [
+    'All', 'Mystery', 'Crime', 'Thriller', 'Comedy', 'Fantasy', 'Romance', 'Sci-Fi', 'Drama', 'Action', 'Slice of Life', 'Adventure', 'Horror', 'Supernatural',
+  ];
 
-  const openDrawer = () => {
-    navigation.dispatch(DrawerActions.openDrawer());
+  const filteredComics = useMemo(() => {
+    let filtered = comicsData;
+    if (selectedGenre) {
+      filtered = filtered.filter(comic => (comic.genre || '').toLowerCase() === selectedGenre.toLowerCase());
+    }
+    if (searchQuery) {
+      filtered = filtered.filter(comic => comic.title.toLowerCase().includes(searchQuery.toLowerCase()));
+    }
+    return filtered;
+  }, [searchQuery, selectedGenre]);
+
+
+
+    const handlePreviewIn = (comic: Comic) => {
+    setPreviewComic(comic);
+    setShowPreview(true);
+  };
+  const handlePreviewOut = () => {
+    setShowPreview(false);
+    setPreviewComic(null);
   };
 
-  const handleCategoryPress = (categoryId: string) => {
-    setActiveCategory(categoryId);
-  };
-
-  const handleComicPress = (comicId: string) => {
-    // Navigate to comic reader
-    // @ts-ignore - Comic reader screen exists in the root navigator
-    navigation.navigate('ComicReader', { comicId });
-  };
-
-  const handleLike = (categoryId: string, comicId: string) => {
-    setComics(
-      comics.map(category => 
-        category.id === categoryId 
-          ? {
-              ...category,
-              comics: category.comics.map(comic => 
-                comic.id === comicId 
-                  ? { 
-                      ...comic, 
-                      isLiked: !comic.isLiked,
-                      likes: comic.isLiked ? comic.likes - 1 : comic.likes + 1 
-                    } 
-                  : comic
-              )
-            } 
-          : category
-      )
-    );
-  };
-
-  const handleLikeComic = (id: string) => {
-    // Update the comics state to toggle the isLiked property
-    const updatedCategories = comics.map(category => ({
-      ...category,
-      comics: category.comics.map(comic => 
-        comic.id === id ? { ...comic, isLiked: !comic.isLiked } : comic
-      )
-    }));
-    setComics(updatedCategories);
-  };
-
-  const handleShare = (comicId: string) => {
-    // Open share modal
-    console.log('Share comic', comicId);
-  };
-
-  const handleShareComic = (id: string) => {
-    console.log('Share comic:', id);
-  };
-
-  const handleReadComic = (id: string) => {
-    console.log('Read comic:', id);
-    setDetailModalVisible(false);
-    // Navigate to comic reader screen
-    navigation.navigate('ComicReader', { comicId: id });
-  };
-
-  const handleCloseModal = () => {
-    setDetailModalVisible(false);
-  };
-
-  const handleUserPress = (username: string) => {
-    // Navigate to user profile
-    console.log('View profile of', username);
-  };
-
-  const handleCreatorPress = (creator: string) => {
-    console.log('Creator pressed:', creator);
-    // Navigate to creator profile
-  };
-
-  const renderCategoryItem = ({ item }: { item: typeof CATEGORIES[0] }) => (
-    <TouchableOpacity 
-      style={[
-        styles.categoryButton,
-        activeCategory === item.id && styles.activeCategoryButton
-      ]}
-      onPress={() => handleCategoryPress(item.id)}
-      activeOpacity={0.8}
+  const renderComic = ({ item }: { item: Comic }) => (
+    <TouchableOpacity
+      style={styles.gridItem}
+      onPress={() => navigation.navigate('ComicReader', { comicId: item.id })}
+      onPressIn={() => handlePreviewIn(item)}
+      onPressOut={handlePreviewOut}
+      activeOpacity={0.85}
     >
-      <Text 
-        style={[
-          styles.categoryText,
-          activeCategory === item.id && styles.activeCategoryText
-        ]}
-      >
-        {item.title}
-      </Text>
+      <Image source={item.cover} style={styles.gridImage} />
     </TouchableOpacity>
   );
-
-  const renderComicItem = ({ item, index }: { item: typeof CATEGORIES[0]['comics'][0], index: number }) => (
-    <TouchableOpacity 
-      style={[styles.comicCard, index % 2 === 0 ? { marginRight: 8 } : { marginLeft: 8 }]}
-      onPress={() => handleComicPress(item.id)}
-      activeOpacity={0.8}
-    >
-      <View style={styles.comicCoverContainer}>
-        <Image 
-          source={{ uri: item.cover }} 
-          style={styles.comicCover} 
-        />
-        <LinearGradient
-          colors={['transparent', 'rgba(0,0,0,0.8)']}
-          style={styles.comicCoverGradient}
-        />
-      </View>
-      
-      <View style={styles.comicDetails}>
-        <Text style={styles.comicTitle} numberOfLines={1}>
-          {item.title}
-        </Text>
-        
-        <TouchableOpacity 
-          style={styles.creatorContainer}
-          onPress={() => handleUserPress(item.creator)}
-        >
-          <Image 
-            source={{ uri: item.creatorAvatar }} 
-            style={styles.creatorAvatar} 
-          />
-          <Text style={styles.creatorName} numberOfLines={1}>
-            {item.creator}
-          </Text>
-        </TouchableOpacity>
-        
-        <View style={styles.comicStats}>
-          <View style={styles.ratingContainer}>
-            <Ionicons name="star" size={14} color={COLORS.accent3} />
-            <Text style={styles.ratingText}>{item.rating}</Text>
-          </View>
-          
-          <TouchableOpacity 
-            style={styles.likeButton}
-            onPress={() => handleLike(activeCategory, item.id)}
-          >
-            <Ionicons 
-              name={item.isLiked ? "heart" : "heart-outline"} 
-              size={16} 
-              color={item.isLiked ? COLORS.like : COLORS.textSecondary} 
-            />
-            <Text style={styles.likeCount}>{item.likes}</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={styles.shareButton}
-            onPress={() => handleShare(item.id)}
-          >
-            <Ionicons name="paper-plane-outline" size={16} color={COLORS.textSecondary} />
-          </TouchableOpacity>
-        </View>
-        
-        <Text style={styles.datePosted}>{item.datePosted}</Text>
-      </View>
-    </TouchableOpacity>
-  );
-
-  const renderComicsGrid = () => {
-    const selectedCategory = comics.find(category => category.id === activeCategory);
-    
-    if (!selectedCategory) return null;
-    
-    return (
-      <FlatList
-        data={selectedCategory.comics}
-        renderItem={renderComicItem}
-        keyExtractor={(item) => item.id}
-        numColumns={2}
-        contentContainerStyle={styles.comicsGrid}
-        showsVerticalScrollIndicator={false}
-      />
-    );
-  };
 
   return (
-    <View style={styles.container}>
-      <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
-      
-      <View style={styles.header}>
-        <TouchableOpacity onPress={openDrawer}>
-          <Ionicons name="menu" size={28} color={COLORS.textPrimary} />
-        </TouchableOpacity>
-        
-        <Text style={styles.headerTitle}>Library</Text>
-        
-        <TouchableOpacity>
-          <Ionicons name="search" size={28} color={COLORS.textPrimary} />
-        </TouchableOpacity>
-      </View>
-      
-      <View style={styles.categoriesContainer}>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <View style={styles.container}>
+        <StatusBar barStyle="light-content" />
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.logoButton} onPress={() => navigation.dispatch(DrawerActions.openDrawer())}>
+            <Logo size={32} />
+          </TouchableOpacity>
+          <View style={styles.searchContainer}>
+            <Ionicons name="search" size={20} color={COLORS.gray} style={styles.searchIcon} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search Library..."
+              placeholderTextColor={COLORS.gray}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+          </View>
+        </View>
+
+        {/* Genre Tags Row */}
+        <View style={styles.genreTagsContainer}>
+          <FlatList
+            data={genres}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={[styles.genreTag, selectedGenre === item || (item === 'All' && !selectedGenre) ? styles.genreTagSelected : null]}
+                onPress={() => setSelectedGenre(item === 'All' ? null : item)}
+              >
+                <Text style={[styles.genreTagText, selectedGenre === item || (item === 'All' && !selectedGenre) ? styles.genreTagTextSelected : null]}>{item}</Text>
+              </TouchableOpacity>
+            )}
+            keyExtractor={(item) => item}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.genreTagsList}
+          />
+        </View>
+
         <FlatList
-          data={CATEGORIES}
-          renderItem={renderCategoryItem}
+          data={filteredComics}
+          renderItem={renderComic}
           keyExtractor={(item) => item.id}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.categoriesList}
+          numColumns={3}
+          contentContainerStyle={styles.gridContainer}
         />
       </View>
-      
-      {renderComicsGrid()}
-      
-      {/* Comic Detail Modal with Action Buttons */}
-      <ComicDetailModal
-        visible={detailModalVisible}
-        comic={selectedComic}
-        onClose={handleCloseModal}
-        onLike={handleLikeComic}
-        onShare={handleShareComic}
-        onRead={handleReadComic}
-        onCreatorPress={handleCreatorPress}
-      />
-    </View>
+
+      {/* Floating Preview Overlay */}
+      {showPreview && previewComic && (
+        <View style={styles.previewOverlay} pointerEvents="box-none">
+          <View style={styles.previewCenterBox} pointerEvents="none">
+            {/* Top: Avatar and Creator */}
+            <View style={styles.previewTopRow}>
+              <Image source={{ uri: previewComic.profilePic }} style={styles.previewAvatar} />
+              <Text style={styles.previewCreatorName}>{previewComic.creator}</Text>
+            </View>
+            {/* Comic Cover */}
+            <Image source={previewComic.cover} style={styles.previewCover} />
+            {/* Bottom: Actions */}
+            <View style={styles.previewActionsRow}>
+              <View style={styles.previewStat}><Ionicons name="heart" size={20} color={COLORS.accent} /><Text style={styles.previewStatText}>{previewComic.likes}</Text></View>
+              <TouchableOpacity style={styles.previewActionBtn}><Ionicons name="person" size={20} color={COLORS.white} /><Text style={styles.previewActionText}>View Profile</Text></TouchableOpacity>
+              <TouchableOpacity style={styles.previewActionBtn}><Ionicons name="share-social-outline" size={20} color={COLORS.white} /><Text style={styles.previewActionText}>Share</Text></TouchableOpacity>
+              <TouchableOpacity style={styles.previewActionBtn}><Ionicons name="bookmark-outline" size={20} color={COLORS.white} /><Text style={styles.previewActionText}>Save</Text></TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      )}
+    </GestureHandlerRootView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: COLORS.black,
   },
   header: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 18, // Slightly increased horizontal padding
-    paddingTop: Platform.OS === 'ios' ? 48 : StatusBar.currentHeight! + 12, // Increased top padding
-    paddingBottom: 12, // Increased bottom padding
-    backgroundColor: COLORS.background,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.divider,
+    alignItems: 'center',
+    paddingHorizontal: SIZES.padding,
+        paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight ?? 0) + 10 : 50,
+    paddingBottom: 10,
+    backgroundColor: COLORS.darkGray,
   },
-  headerTitle: {
-    ...FONTS.h2,
-    color: COLORS.textPrimary,
+  logoButton: {
+    padding: 5,
   },
-  categoriesContainer: {
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.divider,
+  logoImage: {
+    width: 30,
+    height: 30,
+    resizeMode: 'contain',
   },
-  categoriesList: {
-    paddingHorizontal: 16,
+  searchContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.lightGray,
+    borderRadius: 20,
+    paddingHorizontal: 10,
+    marginLeft: 15,
+    height: 40,
   },
-  categoryButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    marginRight: 12,
-    borderRadius: SIZES.radiusMedium,
-    backgroundColor: COLORS.surface,
+  searchIcon: {
+    marginRight: 10,
   },
-  activeCategoryButton: {
-    backgroundColor: COLORS.primary,
+  searchInput: {
+    flex: 1,
+    color: COLORS.white,
+    fontSize: 16,
   },
-  categoryText: {
-    ...FONTS.medium,
-    color: COLORS.textSecondary,
+  gridContainer: {
+    paddingHorizontal: 0,
+    paddingTop: SIZES.padding,
   },
-  activeCategoryText: {
-    color: COLORS.textPrimary,
+  gridItem: {
+    flex: 1,
+    margin: 2,
+    maxWidth: '50%',
+    alignItems: 'stretch',
+    aspectRatio: 0.7,
   },
-  comicsGrid: {
-    padding: 16,
-  },
-  comicCard: {
-    width: CARD_WIDTH,
-    marginBottom: 16,
-    borderRadius: SIZES.radiusMedium,
-    backgroundColor: COLORS.surface,
-    overflow: 'hidden',
-    ...SHADOWS.medium,
-  },
-  comicCoverContainer: {
-    width: '100%',
-    height: CARD_WIDTH * 1.3,
-    position: 'relative',
-  },
-  comicCover: {
+  gridImage: {
     width: '100%',
     height: '100%',
+    borderRadius: 8,
     resizeMode: 'cover',
   },
-  comicCoverGradient: {
+  // Genre tags styles
+  genreTagsContainer: {
+    marginTop: 10,
+    marginBottom: 8,
+    paddingLeft: SIZES.padding,
+  },
+  genreTagsList: {
+    paddingRight: SIZES.padding,
+  },
+  genreTag: {
+    backgroundColor: COLORS.lightGray,
+    borderRadius: 18,
+    paddingHorizontal: 16,
+    paddingVertical: 7,
+    marginRight: 10,
+    marginBottom: 2,
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  genreTagSelected: {
+    backgroundColor: COLORS.accent,
+    borderColor: COLORS.accent,
+  },
+  genreTagText: {
+    color: COLORS.white,
+    fontSize: 15,
+    fontWeight: '500',
+  },
+  genreTagTextSelected: {
+    color: COLORS.white,
+    fontWeight: 'bold',
+  },
+
+  // Floating preview overlay styles
+  previewOverlay: {
     position: 'absolute',
-    bottom: 0,
     left: 0,
+    top: 0,
     right: 0,
-    height: 60,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 100,
+    pointerEvents: 'box-none',
   },
-  comicDetails: {
-    padding: 12,
+  previewCenterBox: {
+    backgroundColor: 'rgba(20,20,20,0.93)',
+    borderRadius: 20,
+    padding: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.25,
+    shadowRadius: 22,
+    elevation: 16,
+    minWidth: 220,
   },
-  comicTitle: {
-    ...FONTS.h3,
-    color: COLORS.textPrimary,
+  previewCover: {
+    width: 160,
+    height: 230,
+    borderRadius: 14,
+    marginBottom: 14,
+    backgroundColor: COLORS.gray,
+    alignSelf: 'center',
+  },
+  previewInfoRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 18,
     marginBottom: 8,
   },
-  creatorContainer: {
+  previewStat: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    marginHorizontal: 8,
+    backgroundColor: 'rgba(0,0,0,0.22)',
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  previewStatText: {
+    color: COLORS.white,
+    marginLeft: 4,
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  // Overlay Top Row (avatar + name)
+  previewTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    gap: 10,
+  },
+  previewAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    marginRight: 8,
+    backgroundColor: '#333',
+  },
+  previewCreatorName: {
+    color: COLORS.white,
+    fontSize: 17,
+    fontWeight: 'bold',
+    flexShrink: 1,
+  },
+  // Overlay Bottom Action Row
+  previewActionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginTop: 8,
+    gap: 4,
+  },
+  previewActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    marginHorizontal: 2,
+  },
+  previewActionText: {
+    color: COLORS.white,
+    marginLeft: 4,
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  // Modal styles
+  largeCoverImage: {
+    width: 180,
+    height: 260,
+    borderRadius: 12,
+    alignSelf: 'center',
+    marginBottom: 18,
+    marginTop: 16,
+    backgroundColor: COLORS.gray,
+  },
+  creatorPanel: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+    justifyContent: 'center',
+    gap: 10,
   },
   creatorAvatar: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    marginRight: 6,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    marginRight: 8,
+    backgroundColor: COLORS.gray,
   },
   creatorName: {
-    ...FONTS.body2,
-    color: COLORS.textSecondary,
+    color: COLORS.white,
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginRight: 8,
   },
-  comicStats: {
+  profileButton: {
+    backgroundColor: COLORS.accent,
+    borderRadius: 14,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  profileButtonText: {
+    color: COLORS.white,
+    fontSize: 13,
+    fontWeight: 'bold',
+  },
+  comicInfoPanel: {
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  comicTitle: {
+    color: COLORS.white,
+    fontSize: 19,
+    fontWeight: 'bold',
+  },
+  chapterText: {
+    color: COLORS.gray,
+    fontSize: 15,
+    marginTop: 2,
+  },
+  actionPanel: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    marginTop: 14,
+    marginBottom: 8,
+    gap: 10,
+  },
+  actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255,255,255,0.06)',
   },
-  ratingContainer: {
+  actionText: {
+    color: COLORS.white,
+    marginLeft: 5,
+    fontSize: 15,
+    fontWeight: '500',
+  },
+  textContainer: {
+    paddingTop: 10,
+  },
+  // Removed old comicTitle style to resolve duplicate key error.
+  comicCreator: {
+    color: COLORS.gray,
+    fontSize: 12,
+  },
+  viewerContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'flex-end',
+  },
+  popupPanel: {
+    backgroundColor: COLORS.darkGray,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    height: 300,
+  },
+  panelContent: {
+    alignItems: 'center',
+  },
+  panelTitle: {
+    color: COLORS.white,
+    fontSize: 22,
+    fontWeight: 'bold',
+  },
+  panelCreator: {
+    color: COLORS.gray,
+    fontSize: 16,
+    marginBottom: 15,
+  },
+  panelStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+    marginBottom: 20,
+  },
+  statItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginRight: 12,
   },
-  ratingText: {
-    ...FONTS.body2,
-    color: COLORS.textSecondary,
-    marginLeft: 4,
+  statText: {
+    color: COLORS.white,
+    marginLeft: 5,
   },
-  likeButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginRight: 12,
+  readButton: {
+    backgroundColor: COLORS.accent,
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 25,
   },
-  likeCount: {
-    ...FONTS.body2,
-    color: COLORS.textSecondary,
-    marginLeft: 4,
+  readButtonText: {
+    color: COLORS.white,
+    fontSize: 16,
+    fontWeight: 'bold',
   },
-  shareButton: {
-    marginLeft: 'auto',
-  },
-  datePosted: {
-    ...FONTS.caption,
-    color: COLORS.textTertiary,
-  },
-  emptyListText: {
-    ...FONTS.body2,
-    color: COLORS.textSecondary,
-    textAlign: 'center',
-    marginTop: SIZES.spacingLarge,
-  }
 });
 
 export default LibraryScreen;

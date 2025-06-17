@@ -12,6 +12,8 @@ import {
 } from 'react-native';
 import * as Animatable from 'react-native-animatable';
 import { useNavigation } from '@react-navigation/native';
+import type { StackNavigationProp } from '@react-navigation/stack';
+import type { RootStackParamList, AuthStackParamList } from '../../navigation/types';
 import { LinearGradient } from 'expo-linear-gradient';
 // Import COLORS from dedicated colors.js file
 import { COLORS } from '../../constants/colors';
@@ -21,7 +23,8 @@ import InfinityLogo from '../../components/common/InfinityLogo';
 import { Ionicons } from '@expo/vector-icons';
 
 const ForgotPasswordScreen = () => {
-  const navigation = useNavigation();
+  const rootNavigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+  const authNavigation = useNavigation<StackNavigationProp<AuthStackParamList>>();
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [emailError, setEmailError] = useState('');
@@ -58,7 +61,7 @@ const ForgotPasswordScreen = () => {
   };
 
   const handleBackToLogin = () => {
-    navigation.navigate('Login');
+    rootNavigation.navigate('Auth');
   };
 
   return (

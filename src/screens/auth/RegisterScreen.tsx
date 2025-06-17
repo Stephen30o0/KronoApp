@@ -12,6 +12,8 @@ import {
 } from 'react-native';
 import * as Animatable from 'react-native-animatable';
 import { useNavigation } from '@react-navigation/native';
+import type { StackNavigationProp } from '@react-navigation/stack';
+import type { RootStackParamList, AuthStackParamList } from '../../navigation/types';
 import { LinearGradient } from 'expo-linear-gradient';
 // Import COLORS from dedicated colors.js file
 import { COLORS } from '../../constants/colors';
@@ -21,7 +23,8 @@ import InfinityLogo from '../../components/common/InfinityLogo';
 import { Ionicons } from '@expo/vector-icons';
 
 const RegisterScreen = () => {
-  const navigation = useNavigation();
+  const rootNavigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+  const authNavigation = useNavigation<StackNavigationProp<AuthStackParamList>>();
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -105,15 +108,12 @@ const RegisterScreen = () => {
     setTimeout(() => {
       setIsLoading(false);
       // Navigate to main app
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'MainApp' }],
-      });
+      rootNavigation.navigate('MainApp');
     }, 1500);
   };
 
   const handleLogin = () => {
-    navigation.navigate('Login');
+    rootNavigation.navigate('Auth');
   };
 
   return (

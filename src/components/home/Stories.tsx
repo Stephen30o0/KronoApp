@@ -60,7 +60,7 @@ const Stories: React.FC<StoriesProps> = ({ stories, onStoryPress, colors: propCo
                 <Ionicons name="add" size={10} color={colors.textPrimary} />
               </View>
             </View>
-            <Text style={styles.addText}>Add status</Text>
+            <Text style={styles.addText}>Add Story</Text>
           </View>
         </TouchableOpacity>
       );

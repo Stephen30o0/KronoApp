@@ -1,265 +1,168 @@
-import { Ionicons } from '@expo/vector-icons';
-import { DrawerActions, useNavigation } from '@react-navigation/native';
-import { LinearGradient } from 'expo-linear-gradient';
-import React from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  TouchableOpacity, 
-  StatusBar,
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
   ScrollView,
-  Platform,
-  Image
+  FlatList,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation, DrawerActions } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 import Logo from '../../components/common/Logo';
-import { COLORS, FONTS } from '../../constants/theme';
+import { COLORS, FONTS, SIZES } from '../../constants/theme';
+import KronoCard from '../../components/wallet/KronoCard';
+import AddFundsModal from '../../components/wallet/AddFundsModal';
+import SendModal from '../../components/wallet/SendModal';
+import ReceiveModal from '../../components/wallet/ReceiveModal';
 
-const TRANSACTIONS = [
+// Define a type for transaction items for type safety
+type Transaction = {
+  id: string;
+  type: 'receive' | 'send' | 'add';
+  title: string;
+  amount: string;
+  date: string;
+};
+
+// Mock data for transactions
+const mockTransactions: Transaction[] = [
   {
     id: '1',
-    type: 'Received',
-    amount: '50',
-    token: 'KLT',
-    from: 'KronoLabs Rewards',
-    date: '2 days ago',
-    status: 'Completed',
-    description: 'Sign-up bonus'
+    type: 'receive',
+    title: 'From KronoLabs Rewards',
+    amount: '+ 50.00 KLT',
+    date: 'June 12, 2025',
   },
   {
     id: '2',
-    type: 'Staked',
-    amount: '25',
-    token: 'KLT',
-    to: 'Voting Pool',
-    date: '1 week ago',
-    status: 'Completed',
-    description: 'Staking rewards'
+    type: 'send',
+    title: 'To Comic Store',
+    amount: '- 15.00 KLT',
+    date: 'June 11, 2025',
   },
   {
     id: '3',
-    type: 'Purchase',
-    amount: '15',
-    token: 'KLT',
-    to: 'Comic Store',
-    date: '3 days ago',
-    status: 'Completed',
-    description: 'Quantum Detectives #5'
+    type: 'add',
+    title: 'Added Funds',
+    amount: '+ 100.00 KLT',
+    date: 'June 10, 2025',
   },
   {
     id: '4',
-    type: 'Reward',
-    amount: '5',
-    token: 'KLT',
-    from: 'Creator Fund',
-    date: 'Today',
-    status: 'Pending',
-    description: 'Content engagement'
-  }
-];
-
-const COLLECTIBLES = [
-  {
-    id: '1',
-    name: 'Quantum Hero #42',
-    type: 'Comic NFT',
-    rarity: 'Rare',
-    imageUrl: 'https://images.unsplash.com/photo-1618519764620-7403abdbdfe9?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80',
-    creator: 'quantum_ink',
-    acquired: '2 weeks ago'
+    type: 'send',
+    title: 'To @QuantumInk',
+    amount: '- 25.00 KLT',
+    date: 'June 9, 2025',
   },
-  {
-    id: '2',
-    name: 'Galactic Explorer Badge',
-    type: 'Achievement NFT',
-    rarity: 'Common',
-    imageUrl: 'https://images.unsplash.com/photo-1601513445506-2ab0d4fb4229?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80',
-    creator: 'KronoLabs',
-    acquired: '1 month ago'
-  },
-  {
-    id: '3',
-    name: 'Neon Dreams Art Piece',
-    type: 'Digital Art NFT',
-    rarity: 'Epic',
-    imageUrl: 'https://images.unsplash.com/photo-1633621412960-6df85eff8c85?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1374&q=80',
-    creator: 'neon_artist',
-    acquired: '3 days ago'
-  }
 ];
 
 const WalletScreen = () => {
   const navigation = useNavigation();
+  const [isAddFundsVisible, setAddFundsVisible] = useState(false);
+  const [isSendVisible, setSendVisible] = useState(false);
+  const [isReceiveVisible, setReceiveVisible] = useState(false);
 
   const openDrawer = () => {
     navigation.dispatch(DrawerActions.openDrawer());
   };
 
-  return (
-    <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={COLORS.background} />
-      
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={openDrawer}>
-          <Ionicons name="menu-outline" size={28} color={COLORS.textPrimary} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Wallet</Text>
-        <TouchableOpacity>
-          <Ionicons name="settings-outline" size={24} color={COLORS.textPrimary} />
-        </TouchableOpacity>
-      </View>
-
-      {/* Content */}
-      <ScrollView style={styles.content}>
-        {/* Balance Card */}
-        <LinearGradient
-          colors={[COLORS.primary, COLORS.secondary]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.balanceCard}
-        >
-          <View style={styles.balanceHeader}>
-            <Text style={styles.balanceTitle}>Total Balance</Text>
-            <View style={styles.tokenLogoContainer}>
-              <Logo size={30} style={styles.tokenLogo} />
-              <Text style={styles.tokenName}>KronoLabs</Text>
-            </View>
-          </View>
-          <Text style={styles.balanceAmount}>50 KLT</Text>
-          <Text style={styles.balanceFiat}>≈ $25.00 USD</Text>
-          
-          <View style={styles.balanceActions}>
-            <TouchableOpacity style={styles.actionButton}>
-              <View style={styles.actionButtonInner}>
-                <Ionicons name="arrow-down-outline" size={20} color={COLORS.textPrimary} />
-                <Text style={styles.actionButtonText}>Receive</Text>
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.actionButton}>
-              <View style={styles.actionButtonInner}>
-                <Ionicons name="arrow-up-outline" size={20} color={COLORS.textPrimary} />
-                <Text style={styles.actionButtonText}>Send</Text>
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.actionButton}>
-              <View style={styles.actionButtonInner}>
-                <Ionicons name="swap-horizontal-outline" size={20} color={COLORS.textPrimary} />
-                <Text style={styles.actionButtonText}>Swap</Text>
-              </View>
-            </TouchableOpacity>
-          </View>
-        </LinearGradient>
-        
-        {/* Staking Section */}
-        <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>Staking</Text>
-          <View style={styles.stakingCard}>
-            <View style={styles.stakingInfo}>
-              <Text style={styles.stakingTitle}>Voting Power</Text>
-              <Text style={styles.stakingAmount}>25 KLT</Text>
-              <Text style={styles.stakingDesc}>Staked in TownSquare Voting Pool</Text>
-            </View>
-            <TouchableOpacity style={styles.stakingButton}>
-              <Text style={styles.stakingButtonText}>Manage</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-        
-        {/* NFT Collectibles Section */}
-        <View style={styles.sectionContainer}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>NFT Collectibles</Text>
-            <TouchableOpacity style={styles.viewAllButton}>
-              <Text style={styles.viewAllText}>View All</Text>
-            </TouchableOpacity>
-          </View>
-          
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.collectiblesContainer}
-          >
-            {COLLECTIBLES.map(collectible => (
-              <TouchableOpacity key={collectible.id} style={styles.collectibleCard}>
-                <View style={styles.collectibleImageContainer}>
-                  <Image 
-                    source={{ uri: collectible.imageUrl }} 
-                    style={styles.collectibleImage} 
-                  />
-                  <View style={styles.collectibleRarityTag}>
-                    <Text style={styles.collectibleRarityText}>{collectible.rarity}</Text>
-                  </View>
-                </View>
-                <View style={styles.collectibleInfo}>
-                  <Text style={styles.collectibleName} numberOfLines={1}>{collectible.name}</Text>
-                  <Text style={styles.collectibleType}>{collectible.type}</Text>
-                  <Text style={styles.collectibleCreator}>By {collectible.creator}</Text>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-        
-        {/* Transactions Section */}
-        <View style={styles.sectionContainer}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Recent Transactions</Text>
-            <TouchableOpacity style={styles.viewAllButton}>
-              <Text style={styles.viewAllText}>View All</Text>
-            </TouchableOpacity>
-          </View>
-          
-          {TRANSACTIONS.map(transaction => (
-            <View key={transaction.id} style={styles.transactionItem}>
-              <View style={styles.transactionIconContainer}>
-                <Ionicons 
-                  name={
-                    transaction.type === 'Received' ? 'arrow-down-outline' : 
-                    transaction.type === 'Staked' ? 'lock-closed-outline' :
-                    transaction.type === 'Purchase' ? 'cart-outline' :
-                    'star-outline'
-                  } 
-                  size={20} 
-                  color={
-                    transaction.type === 'Received' || transaction.type === 'Reward' ? COLORS.success : 
-                    transaction.type === 'Staked' ? COLORS.accent1 :
-                    COLORS.secondary
-                  } 
-                />
-              </View>
-              <View style={styles.transactionDetails}>
-                <Text style={styles.transactionTitle}>{transaction.type}</Text>
-                <Text style={styles.transactionSubtitle}>
-                  {transaction.from ? `From ${transaction.from}` : `To ${transaction.to}`}
-                </Text>
-                <Text style={styles.transactionDescription}>{transaction.description}</Text>
-                <Text style={styles.transactionDate}>{transaction.date}</Text>
-              </View>
-              <View style={styles.transactionAmount}>
-                <Text style={[
-                  styles.transactionAmountText,
-                  {color: 
-                    transaction.type === 'Received' || transaction.type === 'Reward' ? COLORS.success : 
-                    transaction.type === 'Staked' ? COLORS.accent1 :
-                    COLORS.secondary
-                  }
-                ]}>
-                  {transaction.type === 'Received' || transaction.type === 'Reward' ? '+' : '-'}{transaction.amount} {transaction.token}
-                </Text>
-                <View style={[styles.statusBadge, {backgroundColor: transaction.status === 'Completed' ? COLORS.success : COLORS.warning}]} />
-                <Text style={styles.transactionStatus}>{transaction.status}</Text>
-              </View>
-            </View>
-          ))}
-        </View>
-      </ScrollView>
+  const renderHeader = () => (
+    <View style={styles.header}>
+      <TouchableOpacity onPress={openDrawer} style={styles.headerLogo}>
+        <Logo size={32} />
+      </TouchableOpacity>
+      <Text style={styles.headerTitle}>Wallet</Text>
+      <TouchableOpacity>
+        <Ionicons name="settings-outline" size={24} color={COLORS.textPrimary} />
+      </TouchableOpacity>
     </View>
+  );
+
+  const renderBalanceCard = () => (
+    <View style={styles.balanceCard}>
+      <Text style={styles.balanceLabel}>Total Balance</Text>
+      <Text style={styles.balanceAmount}>110.00 KLT</Text>
+      <Text style={styles.balanceFiat}>≈ $55.00 USD</Text>
+    </View>
+  );
+
+  const renderQuickActions = () => (
+    <View style={styles.actionsContainer}>
+      <TouchableOpacity style={styles.actionButton} onPress={() => setSendVisible(true)}>
+        <View style={styles.actionIconContainer}>
+          <Ionicons name="arrow-up" size={24} color={COLORS.textPrimary} />
+        </View>
+        <Text style={styles.actionText}>Send</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.actionButton} onPress={() => setReceiveVisible(true)}>
+        <View style={styles.actionIconContainer}>
+          <Ionicons name="arrow-down" size={24} color={COLORS.textPrimary} />
+        </View>
+        <Text style={styles.actionText}>Receive</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.actionButton} onPress={() => setAddFundsVisible(true)}>
+        <View style={styles.actionIconContainer}>
+          <Ionicons name="add" size={24} color={COLORS.textPrimary} />
+        </View>
+        <Text style={styles.actionText}>Add Funds</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  const renderTransactionItem = ({ item }: { item: Transaction }) => {
+    const isPositive = item.type === 'receive' || item.type === 'add';
+    return (
+      <View style={styles.transactionItem}>
+        <View style={[styles.transactionIcon, { backgroundColor: isPositive ? COLORS.success : COLORS.accent1 }]}>
+          <Ionicons 
+            name={item.type === 'send' ? 'arrow-up' : 'arrow-down'} 
+            size={20} 
+            color={COLORS.background} 
+          />
+        </View>
+        <View style={styles.transactionDetails}>
+          <Text style={styles.transactionTitle}>{item.title}</Text>
+          <Text style={styles.transactionDate}>{item.date}</Text>
+        </View>
+        <Text style={[styles.transactionAmount, { color: isPositive ? COLORS.success : COLORS.textPrimary }]}>
+          {item.amount}
+        </Text>
+      </View>
+    );
+  };
+
+  return (
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
+      {renderHeader()}
+      <ScrollView contentContainerStyle={styles.scrollViewContent}>
+        <KronoCard />
+        {renderBalanceCard()}
+        {renderQuickActions()}
+        <View style={styles.transactionsHeader}>
+          <Text style={styles.sectionTitle}>Recent Transactions</Text>
+          <TouchableOpacity>
+            <Text style={styles.viewAllText}>View All</Text>
+          </TouchableOpacity>
+        </View>
+        <FlatList
+          data={mockTransactions}
+          renderItem={renderTransactionItem}
+          keyExtractor={(item) => item.id}
+          scrollEnabled={false} // Disable FlatList scrolling within ScrollView
+        />
+      </ScrollView>
+
+      <AddFundsModal isVisible={isAddFundsVisible} onClose={() => setAddFundsVisible(false)} />
+      <SendModal isVisible={isSendVisible} onClose={() => setSendVisible(false)} />
+      <ReceiveModal isVisible={isReceiveVisible} onClose={() => setReceiveVisible(false)} />
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
     backgroundColor: COLORS.background,
   },
@@ -267,255 +170,103 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 18,
-    paddingTop: Platform.OS === 'ios' ? 48 : StatusBar.currentHeight! + 12,
-    paddingBottom: 12,
-    backgroundColor: COLORS.background,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.divider,
+    paddingHorizontal: SIZES.medium,
+    paddingVertical: SIZES.small,
+  },
+  headerLogo: {
+    padding: SIZES.small,
   },
   headerTitle: {
     ...FONTS.h2,
     color: COLORS.textPrimary,
   },
-  content: {
-    flex: 1,
-    padding: 16,
+  scrollViewContent: {
+    padding: SIZES.medium,
   },
   balanceCard: {
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 20,
-  },
-  balanceHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    backgroundColor: COLORS.surface,
+    borderRadius: SIZES.radiusLarge,
+    padding: SIZES.large,
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: SIZES.large,
   },
-  balanceTitle: {
-    ...FONTS.body2,
-    color: COLORS.textPrimary,
-    opacity: 0.8,
-  },
-  tokenLogoContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  tokenLogo: {
-    width: 30,
-    height: 15,
-    marginRight: 5,
-  },
-  tokenName: {
-    ...FONTS.body2,
-    color: COLORS.textPrimary,
-    fontWeight: 'bold',
+  balanceLabel: {
+    ...FONTS.body3,
+    color: COLORS.textSecondary,
   },
   balanceAmount: {
     ...FONTS.h1,
     color: COLORS.textPrimary,
-    marginBottom: 5,
+    marginVertical: SIZES.base,
   },
   balanceFiat: {
-    ...FONTS.body2,
-    color: COLORS.textPrimary,
-    opacity: 0.8,
-    marginBottom: 20,
+    ...FONTS.body3,
+    color: COLORS.textSecondary,
   },
-  balanceActions: {
+  actionsContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'space-around',
+    marginBottom: SIZES.large,
   },
   actionButton: {
-    flex: 1,
-    marginHorizontal: 5,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 8,
-    padding: 10,
-  },
-  actionButtonInner: {
-    flexDirection: 'row',
     alignItems: 'center',
+  },
+  actionIconContainer: {
+    backgroundColor: COLORS.surface,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: SIZES.small,
   },
-  actionButtonText: {
-    ...FONTS.body2,
+  actionText: {
+    ...FONTS.body3,
     color: COLORS.textPrimary,
-    marginLeft: 5,
   },
-  sectionContainer: {
-    marginBottom: 20,
-    paddingHorizontal: 16,
-  },
-  sectionHeader: {
+  transactionsHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: SIZES.medium,
   },
   sectionTitle: {
     ...FONTS.h3,
     color: COLORS.textPrimary,
   },
-  viewAllButton: {
-    padding: 4,
-  },
   viewAllText: {
-    ...FONTS.body2,
+    ...FONTS.body3,
     color: COLORS.primary,
-  },
-  collectiblesContainer: {
-    paddingVertical: 8,
-    paddingHorizontal: 4,
-  },
-  collectibleCard: {
-    width: 160,
-    marginRight: 16,
-    backgroundColor: COLORS.surface,
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  collectibleImageContainer: {
-    width: '100%',
-    height: 160,
-    position: 'relative',
-  },
-  collectibleImage: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
-  },
-  collectibleRarityTag: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-  },
-  collectibleRarityText: {
-    ...FONTS.caption,
-    color: COLORS.textPrimary,
-    fontSize: 10,
-  },
-  collectibleInfo: {
-    padding: 12,
-  },
-  collectibleName: {
-    ...FONTS.body1,
-    fontWeight: 'bold',
-    color: COLORS.textPrimary,
-    fontSize: 14,
-    marginBottom: 4,
-  },
-  collectibleType: {
-    ...FONTS.body2,
-    color: COLORS.textSecondary,
-    fontSize: 12,
-    marginBottom: 4,
-  },
-  collectibleCreator: {
-    ...FONTS.caption,
-    color: COLORS.textTertiary,
-    fontSize: 10,
-  },
-  stakingCard: {
-    backgroundColor: COLORS.surface,
-    borderRadius: 12,
-    padding: 16,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  stakingInfo: {
-    flex: 1,
-  },
-  stakingTitle: {
-    ...FONTS.body2,
-    color: COLORS.textSecondary,
-    marginBottom: 5,
-  },
-  stakingAmount: {
-    ...FONTS.h3,
-    color: COLORS.textPrimary,
-    marginBottom: 5,
-  },
-  stakingDesc: {
-    ...FONTS.caption,
-    color: COLORS.textSecondary,
-  },
-  stakingButton: {
-    backgroundColor: COLORS.primary,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-  },
-  stakingButtonText: {
-    ...FONTS.body2,
-    color: COLORS.textPrimary,
   },
   transactionItem: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: COLORS.surface,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 10,
+    borderRadius: SIZES.radiusMedium,
+    padding: SIZES.medium,
+    marginBottom: SIZES.small,
   },
-  transactionIconContainer: {
+  transactionIcon: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: COLORS.background,
-    alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
+    alignItems: 'center',
+    marginRight: SIZES.medium,
   },
   transactionDetails: {
     flex: 1,
   },
   transactionTitle: {
-    ...FONTS.medium,
+    ...FONTS.h4,
     color: COLORS.textPrimary,
-    marginBottom: 2,
-  },
-  transactionSubtitle: {
-    ...FONTS.regular,
-    color: COLORS.textSecondary,
-    marginBottom: 2,
-    fontSize: 12,
-  },
-  transactionDescription: {
-    ...FONTS.regular,
-    color: COLORS.textSecondary,
-    marginBottom: 2,
-    fontSize: 11,
   },
   transactionDate: {
-    ...FONTS.caption,
-    color: COLORS.textTertiary,
-    fontSize: 10,
-  },
-  statusBadge: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 4,
+    ...FONTS.body3,
+    color: COLORS.textSecondary,
   },
   transactionAmount: {
-    alignItems: 'flex-end',
-  },
-  transactionAmountText: {
-    ...FONTS.body2,
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  transactionStatus: {
-    ...FONTS.caption,
-    color: COLORS.textSecondary,
-    textAlign: 'right',
+    ...FONTS.h4,
   },
 });
 

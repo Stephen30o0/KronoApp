@@ -283,26 +283,20 @@ const HomeScreen = () => {
   
   const renderHeader = () => (
     <View style={styles.header}>
-      <TouchableOpacity 
-        onPress={openDrawer}
-      >
-        <Ionicons name="menu" size={24} color={colors.textPrimary} />
+      <TouchableOpacity style={styles.headerLogo} onPress={openDrawer} activeOpacity={0.7}>
+        <Logo style={styles.logo} size={36} />
+        <Text style={[styles.logoText, { color: colors.textPrimary }]}>KronoLabs</Text>
       </TouchableOpacity>
       
-      <View style={styles.headerLogo}>
-        <Logo style={styles.logo} />
-        <Text style={[styles.logoText, { color: colors.textPrimary }]}>KronoLabs</Text>
-      </View>
-      
       <View style={styles.headerRight}>
+        <NotificationIcon style={styles.headerIconButton} />
+
         <TouchableOpacity
           style={styles.headerIconButton}
           onPress={navigateToMessages}
         >
           <Ionicons name="paper-plane-outline" size={22} color={colors.textPrimary} />
         </TouchableOpacity>
-        
-        <NotificationIcon style={styles.headerIconButton} />
       </View>
     </View>
   );

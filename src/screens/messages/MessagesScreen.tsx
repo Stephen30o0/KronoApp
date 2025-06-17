@@ -7,14 +7,14 @@ import {
   StatusBar,
   FlatList,
   Image,
-  Platform
+  TextInput
 } from 'react-native';
 import { useNavigation, DrawerActions } from '@react-navigation/native';
-import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { MessagesStackParamList } from '../../navigation/types';
+import { MessagesStackParamList, ChatItem } from '../../navigation/types';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS, SIZES } from '../../constants/theme';
+import Logo from '../../components/common/Logo';
 
 const CHATS = [
   {
@@ -60,16 +60,7 @@ const CHATS = [
   },
 ];
 
-// Define chat item type
-type ChatItem = {
-  id: string;
-  userName: string;
-  userAvatar: string;
-  lastMessage: string;
-  time: string;
-  unread: number;
-  isGroup?: boolean;
-};
+
 
 const MessagesScreen = () => {
   const navigation = useNavigation<StackNavigationProp<MessagesStackParamList>>();
@@ -78,18 +69,23 @@ const MessagesScreen = () => {
     navigation.dispatch(DrawerActions.openDrawer());
   };
 
-  const navigateToChat = (chatId: string, userName: string, userAvatar: string) => {
-    navigation.navigate('Chat', {
-      chatId,
-      userName,
-      userAvatar
+  const navigateToChat = (chat: ChatItem) => {
+    navigation.navigate('Chat', { 
+      chatId: chat.id, 
+      userName: chat.userName, 
+      userAvatar: chat.userAvatar,
+      isGroup: chat.isGroup
     });
+  };
+
+  const navigateToNewChat = () => {
+    navigation.navigate('NewChat');
   };
 
   const renderChatItem = ({ item }: { item: ChatItem }) => (
     <TouchableOpacity 
       style={styles.chatItem}
-      onPress={() => navigateToChat(item.id, item.userName, item.userAvatar)}
+      onPress={() => navigateToChat(item)}
     >
       <View style={styles.avatarContainer}>
         <Image source={{ uri: item.userAvatar }} style={styles.avatar} />
@@ -128,13 +124,24 @@ const MessagesScreen = () => {
       
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={openDrawer}>
-          <Ionicons name="menu-outline" size={28} color={COLORS.textPrimary} />
+        <TouchableOpacity onPress={openDrawer} style={styles.logoContainer}>
+          <Logo size={32} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Messages</Text>
-        <TouchableOpacity>
-          <Ionicons name="create-outline" size={24} color={COLORS.textPrimary} />
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity onPress={navigateToNewChat}>
+            <Ionicons name="create-outline" size={28} color={COLORS.textPrimary} />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Search Bar */}
+      <View style={styles.searchContainer}>
+        <Ionicons name="search-outline" size={22} color={COLORS.textSecondary} style={styles.searchIcon} />
+        <TextInput
+          placeholder="Search chats or users..."
+          placeholderTextColor={COLORS.textSecondary}
+          style={styles.searchInput}
+        />
       </View>
 
       {/* Chats List */}
@@ -157,14 +164,36 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: Platform.OS === 'ios' ? 60 : 40,
-    paddingBottom: 10,
+    paddingHorizontal: SIZES.medium,
+    paddingTop: SIZES.medium,
+    paddingBottom: SIZES.small,
     backgroundColor: COLORS.background,
   },
-  headerTitle: {
-    ...FONTS.h2,
+  logoContainer: {
+    padding: SIZES.small,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SIZES.medium,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.surface,
+    borderRadius: SIZES.radiusMedium,
+    marginHorizontal: SIZES.medium,
+    paddingHorizontal: SIZES.medium,
+    marginBottom: SIZES.small,
+  },
+  searchIcon: {
+    marginRight: SIZES.small,
+  },
+  searchInput: {
+    flex: 1,
+    ...FONTS.body3,
     color: COLORS.textPrimary,
+    height: 44,
   },
   chatsList: {
     paddingHorizontal: 16,
@@ -172,18 +201,16 @@ const styles = StyleSheet.create({
   chatItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.divider,
+    paddingVertical: SIZES.small,
   },
   avatarContainer: {
     position: 'relative',
-    marginRight: 12,
+    marginRight: SIZES.medium,
   },
   avatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
   },
   groupIndicator: {
     position: 'absolute',
@@ -208,9 +235,8 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   userName: {
-    ...FONTS.body2,
+    ...FONTS.h4,
     color: COLORS.textPrimary,
-    fontWeight: 'bold',
   },
   timeText: {
     ...FONTS.caption,
@@ -222,14 +248,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   lastMessage: {
-    ...FONTS.body2,
+    ...FONTS.body3,
     color: COLORS.textSecondary,
     flex: 1,
-    marginRight: 8,
+    marginRight: SIZES.small,
   },
   unreadMessage: {
     color: COLORS.textPrimary,
-    fontWeight: '500',
+    ...FONTS.body3,
+    fontWeight: 'bold',
   },
   unreadBadge: {
     backgroundColor: COLORS.primary,
