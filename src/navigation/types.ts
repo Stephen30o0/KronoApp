@@ -1,5 +1,9 @@
 // Navigation types for the app
+import { NavigatorScreenParams } from '@react-navigation/native';
+import { Post } from '../constants/types';
+
 export type RootStackParamList = {
+  PostFeed: { posts: Post[]; startIndex: number };
   Splash: undefined;
   Auth: undefined;
   MainApp: undefined;

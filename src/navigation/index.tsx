@@ -34,6 +34,8 @@ import { LibraryScreen } from '../screens/library';
 import { TownSquareScreen } from '../screens/townsquare';
 import { StreamScreen } from '../screens/stream';
 import { ProfileScreen } from '../screens/profile';
+import PostFeedScreen from '../screens/post/PostFeedScreen';
+import { Post } from '../constants/types';
 import { WalletScreen } from '../screens/wallet';
 import { MessagesScreen } from '../screens/messages';
 import ExploreScreen from '../screens/explore/ExploreScreen';
@@ -369,6 +371,7 @@ export const RootNavigator = () => {
           <RootStack.Screen name="History" component={HistoryScreen} options={{ headerShown: false }} />
           <RootStack.Screen name="GoLive" component={GoLiveScreen} options={{ headerShown: false, presentation: 'modal' }} />
           <RootStack.Screen name="WatchParty" component={WatchPartyScreen} options={{ headerShown: false, presentation: 'modal' }} />
+          <RootStack.Screen name="PostFeed" component={PostFeedScreen} options={{ presentation: 'modal', headerShown: false }} />
         </>
       )}
     </RootStack.Navigator>

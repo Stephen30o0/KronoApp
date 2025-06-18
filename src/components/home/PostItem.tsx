@@ -204,13 +204,13 @@ const PostItem: React.FC<PostItemProps> = ({
 
           {/* Comment button and count */}
           <TouchableOpacity onPress={handleCommentPress} style={{ flexDirection: 'row', alignItems: 'center', marginRight: 6 }}>
-            <Ionicons name="chatbubble-outline" size={22} color={COLORS.textPrimary} />
+            <Ionicons name="chatbubble" size={22} color={COLORS.textPrimary} />
           </TouchableOpacity>
           <Text style={{ color: COLORS.textPrimary, marginRight: 12 }}>{comments}</Text>
 
           {/* Share button */}
           <TouchableOpacity onPress={handleSharePress} style={{ flexDirection: 'row', alignItems: 'center', marginRight: 12 }}>
-            <Ionicons name="share-social-outline" size={22} color={COLORS.textPrimary} />
+            <Ionicons name="share-social" size={22} color={COLORS.textPrimary} />
           </TouchableOpacity>
 
           {/* Bookmark button */}

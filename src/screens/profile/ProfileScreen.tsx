@@ -1,19 +1,20 @@
+import { Ionicons } from '@expo/vector-icons';
+import { DrawerActions, useNavigation } from '@react-navigation/native';
 import React, { useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  Image,
-  FlatList,
   Dimensions,
+  FlatList,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation, DrawerActions } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
 import Logo from '../../components/common/Logo';
 import { COLORS, FONTS, SIZES } from '../../constants/theme';
+import { Post } from '../../constants/types';
 
 // Mock user data
 const user = {
@@ -29,7 +30,7 @@ const user = {
 };
 
 // Mock posts data for the grid
-const userPosts = Array.from({ length: 23 }, (_, i) => ({
+const userPosts: Post[] = Array.from({ length: 23 }, (_, i) => ({
   id: `post-${i + 1}`,
   username: user.username,
   avatar: user.avatar,
@@ -45,7 +46,17 @@ const userPosts = Array.from({ length: 23 }, (_, i) => ({
 
 const ProfileScreen = () => {
   const navigation = useNavigation<any>();
-  const [activeTab, setActiveTab] = useState('Creations');
+
+  const TABS = {
+    COMICS: 'Comics',
+    VIDEOS: 'Videos',
+    IDEAS: 'Ideas',
+  };
+  const [activeTab, setActiveTab] = useState(TABS.COMICS);
+
+  // Mock data for other tabs - replace with real data later
+  const videoPosts: Post[] = [];
+  const ideaPosts: Post[] = [];
 
   const openDrawer = () => {
     navigation.dispatch(DrawerActions.openDrawer());
@@ -95,7 +106,7 @@ const ProfileScreen = () => {
 
   const renderCreatorTools = () => (
     <View style={styles.creatorToolsContainer}>
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.creatorToolsButton}
         onPress={() => navigation.navigate('CreatorDashboard')}
       >
@@ -110,50 +121,78 @@ const ProfileScreen = () => {
   const renderTabs = () => (
     <View style={styles.tabsContainer}>
       <TouchableOpacity
-        style={[styles.tab, activeTab === 'Creations' && styles.activeTab]}
-        onPress={() => setActiveTab('Creations')}>
-        <Ionicons name="grid" size={24} color={activeTab === 'Creations' ? COLORS.primary : COLORS.textSecondary} />
+        style={[styles.tab, activeTab === TABS.COMICS && styles.activeTab]}
+        onPress={() => setActiveTab(TABS.COMICS)}>
+        <Ionicons name="book-outline" size={24} color={activeTab === TABS.COMICS ? COLORS.primary : COLORS.textSecondary} />
       </TouchableOpacity>
       <TouchableOpacity
-        style={[styles.tab, activeTab === 'Collected' && styles.activeTab]}
-        onPress={() => setActiveTab('Collected')}>
-        <Ionicons name="bookmark" size={24} color={activeTab === 'Collected' ? COLORS.primary : COLORS.textSecondary} />
+        style={[styles.tab, activeTab === TABS.VIDEOS && styles.activeTab]}
+        onPress={() => setActiveTab(TABS.VIDEOS)}>
+        <Ionicons name="videocam-outline" size={24} color={activeTab === TABS.VIDEOS ? COLORS.primary : COLORS.textSecondary} />
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[styles.tab, activeTab === TABS.IDEAS && styles.activeTab]}
+        onPress={() => setActiveTab(TABS.IDEAS)}>
+        <Ionicons name="bulb-outline" size={24} color={activeTab === TABS.IDEAS ? COLORS.primary : COLORS.textSecondary} />
       </TouchableOpacity>
     </View>
   );
 
-  const renderCreationsGrid = () => (
-    <FlatList
-      data={userPosts}
-      keyExtractor={(item) => item.id}
-      numColumns={3}
-      renderItem={({ item }) => (
-        <TouchableOpacity 
-          style={styles.postItem}
-          onPress={() => navigation.navigate('PostDetailScreen', { post: item })}
-        >
-          <Image source={{ uri: item.imageUrl }} style={styles.postImage} />
-        </TouchableOpacity>
-      )}
-      scrollEnabled={false} // The parent ScrollView will handle scrolling
-    />
+  const ListHeader = () => (
+    <>
+      {renderProfileInfo()}
+      {renderCreatorTools()}
+      {renderTabs()}
+    </>
   );
-  
-  const renderCollected = () => (
+
+  const getActiveTabData = () => {
+    switch (activeTab) {
+      case TABS.COMICS:
+        return userPosts;
+      case TABS.VIDEOS:
+        return videoPosts;
+      case TABS.IDEAS:
+        return ideaPosts;
+      default:
+        return [];
+    }
+  };
+
+  const renderEmptyList = () => (
     <View style={styles.emptyTabContainer}>
-        <Text style={styles.emptyTabText}>Your collected items will appear here.</Text>
+      <Text style={styles.emptyTabText}>No {activeTab.toLowerCase()} yet. This is a great place to add some!</Text>
     </View>
   );
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       {renderHeader()}
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {renderProfileInfo()}
-        {renderCreatorTools()}
-        {renderTabs()}
-        {activeTab === 'Creations' ? renderCreationsGrid() : renderCollected()}
-      </ScrollView>
+      <FlatList
+        key={activeTab} // Ensures re-render on tab change
+        data={getActiveTabData()}
+        keyExtractor={(item) => item.id}
+        numColumns={3}
+        ListHeaderComponent={<ListHeader />}
+        renderItem={({ item, index }) => (
+          <TouchableOpacity
+            style={styles.postItem}
+            onPress={() => {
+              // This navigates to a new screen that should display a scrollable feed.
+              // This 'PostFeed' screen needs to be created in your navigation.
+              // It should accept 'posts' and 'startIndex' as params.
+              navigation.navigate('PostFeed', {
+                posts: userPosts,
+                startIndex: index,
+              });
+            }}
+          >
+            <Image source={{ uri: item.imageUrl }} style={styles.postImage} />
+          </TouchableOpacity>
+        )}
+        ListEmptyComponent={renderEmptyList}
+        showsVerticalScrollIndicator={false}
+      />
     </SafeAreaView>
   );
 };

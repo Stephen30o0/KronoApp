@@ -75,6 +75,8 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
   );
 };
 
+const tabs = ['Comics', 'Videos', 'Townsquare', 'Saves'];
+
 const styles = StyleSheet.create({
   container: {
     borderBottomWidth: 1,
