@@ -9,6 +9,7 @@ import {
   Image,
   TextInput
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, DrawerActions } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { MessagesStackParamList, ChatItem } from '../../navigation/types';
@@ -119,7 +120,7 @@ const MessagesScreen = () => {
   );
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.background} />
       
       {/* Header */}
@@ -151,7 +152,7 @@ const MessagesScreen = () => {
         keyExtractor={item => item.id}
         contentContainerStyle={styles.chatsList}
       />
-    </View>
+    </SafeAreaView>
   );
 };
 
