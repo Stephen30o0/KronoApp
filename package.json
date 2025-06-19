@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@expo/vector-icons": "^14.1.0",
+    "@gorhom/bottom-sheet": "^5.1.6",
     "@react-native-async-storage/async-storage": "^2.1.2",
     "@react-native-community/masked-view": "^0.1.11",
     "@react-native-seoul/masonry-list": "^1.4.2",
@@ -21,6 +22,7 @@
     "@react-navigation/native": "^7.1.9",
     "@react-navigation/stack": "^7.3.2",
     "@walletconnect/client": "^1.8.0",
+    "buffer": "^6.0.3",
     "ethers": "^5.7.2",
     "expo": "53.0.11",
     "expo-av": "~15.1.6",

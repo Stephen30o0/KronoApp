@@ -30,19 +30,31 @@ const user = {
 };
 
 // Mock posts data for the grid
-const userPosts: Post[] = Array.from({ length: 23 }, (_, i) => ({
-  id: `post-${i + 1}`,
-  username: user.username,
-  avatar: user.avatar,
-  caption: `This is a beautiful shot! #${i % 2 === 0 ? 'Nature' : 'Art'} #${i % 3 === 0 ? 'Photography' : 'Creative'} `,
-  tags: i % 2 === 0 ? ['Nature', 'Photography'] : ['Art', 'Creative'],
-  comments: Math.floor(Math.random() * 200),
-  likes: Math.floor(Math.random() * 5000),
-  timestamp: `${i + 1}h ago`,
-  isLiked: i % 3 === 0,
-  isBookmarked: i % 4 === 0,
-  imageUrl: `https://picsum.photos/seed/${i + 10}/500/500`,
-}));
+const userPosts: Post[] = Array.from({ length: 23 }, (_, i) => {
+  const commentCount = Math.floor(Math.random() * 5);
+  return {
+    id: `post-${i + 1}`,
+    username: user.username,
+    avatar: user.avatar,
+    caption: `This is a beautiful shot! #${i % 2 === 0 ? 'Nature' : 'Art'} #${i % 3 === 0 ? 'Photography' : 'Creative'} `,
+    tags: i % 2 === 0 ? ['Nature', 'Photography'] : ['Art', 'Creative'],
+    comments: commentCount,
+    commentData: Array.from({ length: commentCount }, (__, j) => ({
+      id: `p${i}-c${j}`,
+      user: `Commenter${j}`,
+      avatar: `https://randomuser.me/api/portraits/men/${j}.jpg`,
+      note: `This is a great comment, number ${j}`,
+      time: `${j * 2}m ago`,
+      likes: Math.floor(Math.random() * 100),
+      replies: [],
+    })),
+    likes: Math.floor(Math.random() * 5000),
+    timestamp: `${i + 1}h ago`,
+    isLiked: i % 3 === 0,
+    isBookmarked: i % 4 === 0,
+    imageUrl: `https://picsum.photos/seed/${i + 10}/500/500`,
+  };
+});
 
 const ProfileScreen = () => {
   const navigation = useNavigation<any>();
@@ -69,7 +81,7 @@ const ProfileScreen = () => {
   const renderHeader = () => (
     <View style={styles.header}>
       <TouchableOpacity onPress={openDrawer} style={styles.headerLogo}>
-        <Logo size={32} />
+        <Logo size={36} />
       </TouchableOpacity>
       <Text style={styles.headerTitle}>{user.username}</Text>
       <TouchableOpacity onPress={navigateToSettings}>

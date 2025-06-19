@@ -18,6 +18,7 @@ import {
 import * as Animatable from 'react-native-animatable';
 import Logo from '../../components/common/Logo';
 import NotificationIcon from '../../components/common/NotificationIcon';
+import CommentsPopup, { Comment } from '../../components/common/CommentsPopup';
 import { COLORS, FONTS, SHADOWS, SIZES } from '../../constants/theme';
 
 const { width } = Dimensions.get('window');
@@ -56,8 +57,26 @@ function getCurrencyValue(tokens: number, currency: string = 'KRN'): string {
   }
 }
 
+interface ComicIdea {
+  id: string;
+  title: string;
+  creator: string;
+  creatorAvatar: string;
+  description: string;
+  coverImage: string;
+  genres: string[];
+  fundingGoal: number;
+  currentFunding: number;
+  votesCount: number;
+  likesCount: number;
+  commentsCount: number;
+  isLiked: boolean;
+  datePosted: string;
+  commentData?: Comment[];
+}
+
 // Mock data for comic ideas
-const COMIC_IDEAS = [
+const COMIC_IDEAS: ComicIdea[] = [
   {
     id: '1',
     title: 'Quantum Detectives: A Mystery in Multiple Dimensions',
@@ -73,6 +92,17 @@ const COMIC_IDEAS = [
     commentsCount: 42,
     isLiked: false,
     datePosted: '2d ago',
+    commentData: [
+        {
+            id: 'ts1-c1',
+            user: 'ComicFan1',
+            avatar: 'https://randomuser.me/api/portraits/men/10.jpg',
+            note: 'This is a brilliant idea! I would totally read this.',
+            time: '1d ago',
+            likes: 15,
+            replies: [],
+        },
+    ],
   },
   {
     id: '2',
@@ -89,6 +119,7 @@ const COMIC_IDEAS = [
     commentsCount: 58,
     isLiked: true,
     datePosted: '1w ago',
+    commentData: [],
   },
   // more comic ideas...
 ];
@@ -107,6 +138,9 @@ const TownSquareScreen = () => {
   const [tokenAmount, setTokenAmount] = useState('');
   const [voteStep, setVoteStep] = useState<'options' | 'tokenInput'>('options');
   const [isShowingAd, setIsShowingAd] = useState(false);
+  const [isCommentsVisible, setIsCommentsVisible] = useState(false);
+  const [activeComments, setActiveComments] = useState<Comment[]>([]);
+  const [activeIdeaId, setActiveIdeaId] = useState<string | null>(null);
 
   const modalAnimation = useRef(new Animated.Value(0)).current;
   const currencyAnimation = useRef(new Animated.Value(0)).current;
@@ -148,7 +182,47 @@ const TownSquareScreen = () => {
   };
 
   const handleComment = (ideaId: string) => {
-    console.log('Navigate to comments for idea', ideaId);
+    const idea = comicIdeas.find(i => i.id === ideaId);
+    if (idea && idea.commentData) {
+      setActiveComments(idea.commentData);
+      setActiveIdeaId(ideaId);
+      setIsCommentsVisible(true);
+    }
+  };
+
+  const handleCloseComments = () => {
+    setIsCommentsVisible(false);
+    setActiveComments([]);
+    setActiveIdeaId(null);
+  };
+
+  const handleSendComment = (text: string, parentId?: string) => {
+    if (!activeIdeaId) return;
+
+    const newComment: Comment = {
+      id: `ts-c${Date.now()}`,
+      user: 'CurrentUser',
+      avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026704d',
+      note: text,
+      time: 'Just now',
+      likes: 0,
+      replies: [],
+    };
+
+    const updatedIdeas = comicIdeas.map(idea => {
+      if (idea.id === activeIdeaId) {
+        const newCommentData = [...(idea.commentData || []), newComment];
+        // Simplified logic, does not handle replies for now
+        return { ...idea, commentData: newCommentData, commentsCount: idea.commentsCount + 1 };
+      }
+      return idea;
+    });
+
+    setComicIdeas(updatedIdeas);
+    const updatedIdea = updatedIdeas.find(i => i.id === activeIdeaId);
+    if (updatedIdea) {
+      setActiveComments(updatedIdea.commentData || []);
+    }
   };
 
   const handleShare = (ideaId: string) => {
@@ -368,10 +442,16 @@ const TownSquareScreen = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <CommentsPopup
+        visible={isCommentsVisible}
+        onClose={handleCloseComments}
+        comments={activeComments}
+        onSend={handleSendComment}
+      />
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={openDrawer} style={styles.headerLogo}>
-          <Logo size={32} />
+          <Logo size={36} />
           <Text style={styles.logoText}>KronoLabs</Text>
         </TouchableOpacity>
 

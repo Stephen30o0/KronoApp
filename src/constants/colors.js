@@ -60,11 +60,17 @@ const COLORS = {
 };
 
 // Dark theme colors - same as default COLORS
-const DARK_COLORS = { ...COLORS };
+const DARK_COLORS = {
+  ...COLORS,
+  tint: '#A259FF', // Added for compatibility
+  icon: '#FFFFFF',   // Added for compatibility
+};
 
 // Light theme colors
 const LIGHT_COLORS = {
   ...COLORS,
+  tint: '#A259FF', // Added for compatibility
+  icon: '#1A1A23',   // Added for compatibility
   
   // Override with light-specific colors
   primaryLight: '#E5D4FF',
@@ -90,3 +96,9 @@ const LIGHT_COLORS = {
 
 // Export all color constants using ES modules syntax
 export { COLORS, DARK_COLORS, LIGHT_COLORS };
+
+// Add this for compatibility with the Expo template
+export const Colors = {
+  light: LIGHT_COLORS,
+  dark: DARK_COLORS,
+};

@@ -17,7 +17,7 @@ import { RootStackParamList } from '../../navigation/types';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS, SIZES } from '../../constants/theme';
 import LockedNotification from '../../components/common/LockedNotification';
-import ChatboxPopup, { ChatComment } from '../../components/common/ChatboxPopup';
+import CommentsPopup, { Comment } from '../../components/common/CommentsPopup';
 
 const { width, height } = Dimensions.get('window');
 
@@ -106,13 +106,45 @@ const ComicReaderScreen = () => {
   const [following, setFollowing] = useState(false);
   // Comments chatbox state
   const [commentsPopupVisible, setCommentsPopupVisible] = useState(false);
-  const [comments, setComments] = useState<ChatComment[]>([
-    { id: 'c1', user: 'Jane', avatar: '', text: 'Amazing art! 😍', time: '2m', replies: [
-      { id: 'c1-1', user: 'Alex', avatar: '', text: 'Agreed!', time: '1m' }
-    ] },
-    { id: 'c2', user: 'Ali', avatar: '', text: 'Love this page!', time: '5m' },
-    { id: 'c3', user: 'Sam', avatar: '', text: 'Can’t wait for the next chapter!', time: '12m' },
-  ]);
+  const [comments, setComments] = useState<Comment[]>([
+    {
+        id: 'c1',
+        user: 'Jane',
+        avatar: 'https://randomuser.me/api/portraits/women/1.jpg',
+        note: 'Amazing art! 😍',
+        time: '2m',
+        likes: 12,
+        replies: [
+            {
+                id: 'c1-1',
+                user: 'Alex',
+                avatar: 'https://randomuser.me/api/portraits/men/1.jpg',
+                note: 'Agreed!',
+                time: '1m',
+                likes: 2,
+                replies: [],
+            },
+        ],
+    },
+    {
+        id: 'c2',
+        user: 'Ali',
+        avatar: 'https://randomuser.me/api/portraits/men/2.jpg',
+        note: 'Love this page!',
+        time: '5m',
+        likes: 5,
+        replies: [],
+    },
+    {
+        id: 'c3',
+        user: 'Sam',
+        avatar: 'https://randomuser.me/api/portraits/women/3.jpg',
+        note: 'Can’t wait for the next chapter!',
+        time: '12m',
+        likes: 8,
+        replies: [],
+    },
+]);
   // Padlock notification state
   const [notifVisible, setNotifVisible] = useState(false);
   const [notifMsg, setNotifMsg] = useState('');
@@ -331,25 +363,38 @@ const ComicReaderScreen = () => {
   };
 
   // Add new comment or reply
-  const handleSendComment = (text: string, replyToId?: string): void => {
-    if (replyToId) {
-      setComments((prev: ChatComment[]) => prev.map((c) =>
-        c.id === replyToId
-          ? { ...c, replies: [...(c.replies || []), { id: `r${Date.now()}`, user: 'You', avatar: '', text, time: 'now' }] }
-          : { ...c, replies: c.replies?.map((r: any) => r.id === replyToId ? { ...r, replies: [...(r.replies || []), { id: `r${Date.now()}`, user: 'You', avatar: '', text, time: 'now' }] } : r) }
-      ));
+  const handleSendComment = (text: string, parentId?: string) => {
+    const newComment: Comment = {
+      id: `c${Date.now()}`,
+      user: 'CurrentUser',
+      avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026704d',
+      note: text,
+      time: 'Just now',
+      likes: 0,
+      replies: [],
+    };
+
+    if (parentId) {
+      const findAndAddReply = (items: Comment[]): boolean => {
+        for (const item of items) {
+          if (item.id === parentId) {
+            item.replies = [...(item.replies || []), newComment];
+            return true;
+          }
+          if (item.replies && findAndAddReply(item.replies)) {
+            return true;
+          }
+        }
+        return false;
+      };
+
+      const updatedComments = [...comments];
+      findAndAddReply(updatedComments);
+      setComments(updatedComments);
     } else {
-      setComments([
-        {
-          id: `c${Date.now()}`,
-          user: 'You',
-          avatar: '',
-          text,
-          time: 'now',
-        },
-        ...comments,
-      ]);
+      setComments([newComment, ...comments]);
     }
+    setCommentCount(prev => prev + 1);
   };
 
   const handleCloseComments = (): void => {
@@ -564,7 +609,7 @@ const ComicReaderScreen = () => {
       {/* Locked Notification */}
       <LockedNotification visible={notifVisible} message={notifMsg} onFadeOut={handleNotifFade} />
       {/* Chatbox Popup */}
-      <ChatboxPopup
+      <CommentsPopup
         visible={commentsPopupVisible}
         onClose={handleCloseComments}
         comments={comments}

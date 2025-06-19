@@ -71,7 +71,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   footerLabel: {
-    ...FONTS.body4,
+    ...FONTS.body3,
     color: COLORS.textSecondary,
     marginBottom: SIZES.base,
   },

@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { COLORS, FONTS, SIZES } from '../../constants/theme';
 import { RootStackParamList } from '../../navigation/types';
+import CommentsPopup, { Comment } from '../../components/common/CommentsPopup';
 
 const { width, height } = Dimensions.get('window');
 
@@ -28,6 +29,17 @@ const mockStreamDetails = {
   description: 'Thrown into the deep end during his first week at the CIA, rookie lawyer Owen Hendricks gets in over his head when he uncovers a possible threat.',
   cast: ['Noah Centineo', 'Laura Haddock', 'Colton Dunn'],
   creator: 'Alexi Hawley',
+  comments: [
+    {
+        id: 'd1-c1',
+        user: 'MovieBuff',
+        avatar: 'https://randomuser.me/api/portraits/men/20.jpg',
+        note: 'What a cliffhanger! Can\'t wait for season 2.',
+        time: '3d ago',
+        likes: 42,
+        replies: [],
+    },
+  ],
   seasons: [
     {
       season: 1,
@@ -55,10 +67,34 @@ const DetailsScreen = () => {
   const videoRef = useRef<Video>(null);
   const [selectedSeason, setSelectedSeason] = React.useState(mockStreamDetails.seasons[0]);
   const [isSeasonPickerVisible, setSeasonPickerVisible] = React.useState(false);
+  const [isCommentsVisible, setIsCommentsVisible] = useState(false);
+  const [comments, setComments] = useState<Comment[]>(mockStreamDetails.comments);
 
   const handleSelectEpisode = (episode: any) => {
     console.log(`Playing Season ${selectedSeason.season}, Episode: ${episode.title}`);
     // TODO: Navigate to a video player screen
+  };
+
+  const handleOpenComments = () => {
+    setIsCommentsVisible(true);
+  };
+
+  const handleCloseComments = () => {
+    setIsCommentsVisible(false);
+  };
+
+  const handleSendComment = (text: string, parentId?: string) => {
+    const newComment: Comment = {
+      id: `d-c${Date.now()}`,
+      user: 'CurrentUser',
+      avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026704d',
+      note: text,
+      time: 'Just now',
+      likes: 0,
+      replies: [],
+    };
+    // Simplified logic, does not handle replies for now
+    setComments([newComment, ...comments]);
   };
 
   // In a real app, you'd fetch this data based on streamId
@@ -66,6 +102,12 @@ const DetailsScreen = () => {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <CommentsPopup
+        visible={isCommentsVisible}
+        onClose={handleCloseComments}
+        comments={comments}
+        onSend={handleSendComment}
+      />
       <ScrollView style={styles.container}>
         <View style={styles.videoContainer}>
           <Video
@@ -107,7 +149,7 @@ const DetailsScreen = () => {
               <Ionicons name="heart-outline" size={28} color={COLORS.textSecondary} />
               <Text style={styles.socialButtonText}>Like</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.socialButton} onPress={() => console.log('Comment Tapped')}>
+            <TouchableOpacity style={styles.socialButton} onPress={handleOpenComments}>
               <Ionicons name="chatbubble-outline" size={28} color={COLORS.textSecondary} />
               <Text style={styles.socialButtonText}>Comment</Text>
             </TouchableOpacity>

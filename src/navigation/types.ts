@@ -2,11 +2,13 @@
 import { NavigatorScreenParams } from '@react-navigation/native';
 import { Post } from '../constants/types';
 
+import { Comment } from '../components/comments/CommentItem';
+
 export type RootStackParamList = {
   PostFeed: { posts: Post[]; startIndex: number };
   Splash: undefined;
   Auth: undefined;
-  MainApp: undefined;
+  MainApp: NavigatorScreenParams<DrawerParamList>;
   AddNotification: undefined;
   ComicDetail: { id: string };
   ComicReader: { comicId: string };
@@ -23,19 +25,7 @@ export type RootStackParamList = {
   EditProfile: undefined;
   FollowersList: { userId: string };
   FollowingList: { userId: string };
-  PostDetailScreen: { post: {
-    id: string;
-    username: string;
-    avatar: string;
-    caption: string;
-    tags?: string[];
-    comments: number;
-    likes: number;
-    timestamp: string;
-    isLiked: boolean;
-    isBookmarked: boolean;
-    imageUrl?: string;
-  }};
+  PostDetailScreen: { post: Post };
   Details: { streamId: string };
   History: undefined;
   GoLive: undefined;
@@ -44,6 +34,13 @@ export type RootStackParamList = {
   NewProject: undefined;
   Analytics: undefined;
   Payouts: undefined;
+  Comments: {
+    comments: Comment[];
+    onSendComment: (text: string, parentId?: string) => void;
+    onLikeComment: (commentId: string) => void;
+    currentUserAvatar: string;
+    onClose: () => void;
+  };
 };
 
 export type AuthStackParamList = {

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,25 +7,26 @@ import {
   StatusBar,
   FlatList,
   Image,
-  Dimensions,
   Platform,
-  Animated,
   RefreshControl,
-  ScrollView,
 } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, DrawerActions } from '@react-navigation/native';
-import { DrawerNavigationProp } from '@react-navigation/drawer';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList } from '../../navigation/types';
+import { BottomSheetModal, BottomSheetModalProvider } from '@gorhom/bottom-sheet';
+import CommentsBottomSheet from '../../components/comments/CommentsBottomSheet';
 import { COLORS } from '../../constants/colors';
-import { FONTS, SIZES, SHADOWS } from '../../constants/theme';
+import { FONTS } from '../../constants/theme';
 import Logo from '../../components/common/Logo';
 import NotificationIcon from '../../components/common/NotificationIcon';
+
 import Stories from '../../components/home/Stories';
 import PostItem from '../../components/home/PostItem';
-import PullToRefresh from '../../components/common/PullToRefresh';
 import SkeletonLoader from '../../components/common/SkeletonLoader';
 import haptics from '../../utils/haptics';
-import accessibility from '../../utils/accessibility';
 import { useTheme } from '../../context/ThemeContext';
 
 // Define drawer navigation types
@@ -42,6 +43,16 @@ type DrawerParamList = {
 };
 
 // Define types for social feed
+interface Comment {
+  id: string;
+  user: { username: string; profilePicture: string; };
+  text: string;
+  timestamp: string;
+  likes: number;
+  isLiked: boolean;
+  replies?: Comment[];
+}
+
 interface Post {
   id: string;
   username: string;
@@ -53,7 +64,8 @@ interface Post {
   timestamp: string;
   isLiked: boolean;
   isBookmarked: boolean;
-  imageUrl?: string; // Optional image URL for the post
+  imageUrl?: string;
+  commentData: Comment[];
 }
 
 interface Story {
@@ -68,40 +80,74 @@ interface Story {
 const POSTS: Post[] = [
   {
     id: '1',
-    username: 'komix_adventures',
-    caption: 'Just finished the latest issue! What do you think?',
-    tags: ['#comics', '#artwork', '#newrelease'],
-    comments: 42,
-    likes: 187,
-    timestamp: '2 hours ago',
+    username: 'KronoLabs',
+    avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026704d',
+    caption: 'First look at our new UI! What do you think? #KronoApp #UI #Design',
+    tags: ['#KronoApp', '#UI', '#Design'],
+    comments: 12,
+    likes: 256,
+    timestamp: '2h ago',
     isLiked: false,
     isBookmarked: false,
-    imageUrl: 'https://images.unsplash.com/photo-1618519764620-7403abdbdfe9?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80'
+    imageUrl: 'https://images.unsplash.com/photo-1576495199011-2de57923133c?q=80&w=2835&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+    commentData: [
+      {
+        id: 'c1',
+        user: { username: 'campusgiant', profilePicture: 'https://randomuser.me/api/portraits/men/1.jpg' },
+        text: 'What about Sir Jim Ratcliff',
+        timestamp: '37m',
+        likes: 13,
+        replies: [
+          {
+            id: 'c1-r1',
+            user: { username: 'alistair_xav', profilePicture: 'https://randomuser.me/api/portraits/men/2.jpg' },
+            text: 'GGMU ❤️',
+            timestamp: '25m',
+            likes: 2,
+            isLiked: false,
+          },
+        ],
+        isLiked: false,
+      },
+      {
+        id: 'c2',
+        user: { username: 'jishnuu_devv', profilePicture: 'https://randomuser.me/api/portraits/men/3.jpg' },
+        text: 'Sir Goat Antony',
+        timestamp: '23m',
+        likes: 11,
+        isLiked: true,
+        replies: [],
+      },
+    ],
   },
   {
     id: '2',
-    username: 'inkmaster',
-    caption: 'Working on some character concepts for my new series.',
-    tags: ['#characterdesign', '#workinprogress', '#comicart'],
-    comments: 23,
-    likes: 156,
-    timestamp: '4 hours ago',
+    username: 'John Doe',
+    avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026704e',
+    caption: 'Exploring the mountains. Nature is the best artist.',
+    tags: ['#nature', '#mountains', '#adventure'],
+    comments: 8,
+    likes: 189,
+    timestamp: '5h ago',
     isLiked: true,
-    isBookmarked: true,
-    imageUrl: 'https://images.unsplash.com/photo-1605379399642-870262d3d051?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2006&q=80'
+    isBookmarked: false,
+    imageUrl: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+    commentData: [],
   },
   {
     id: '3',
-    username: 'colorpalette',
-    caption: 'Color palette exploration for the dystopian cityscape.',
-    tags: ['#colors', '#digitalart', '#conceptart'],
-    comments: 18,
-    likes: 104,
-    timestamp: '1 day ago',
+    username: 'Jane Smith',
+    avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026704f',
+    caption: 'City lights and late night vibes.',
+    tags: ['#citylife', '#night', '#urban'],
+    comments: 23,
+    likes: 432,
+    timestamp: '1d ago',
     isLiked: false,
-    isBookmarked: false,
-    imageUrl: 'https://images.unsplash.com/photo-1633621412960-6df85eff8c85?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1374&q=80'
-  }
+    isBookmarked: true,
+    imageUrl: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+    commentData: [],
+  },
 ];
 
 // Mock data for stories
@@ -145,51 +191,128 @@ const STORIES: Story[] = [
 ];
 
 const HomeScreen = () => {
-  const navigation = useNavigation<DrawerNavigationProp<DrawerParamList>>();
+  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const { colors } = useTheme();
   const [posts, setPosts] = useState<Post[]>(POSTS);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  
-  // Navigation functions
-  const openDrawer = () => {
-    navigation.dispatch(DrawerActions.openDrawer());
-    haptics.selection();
-  };
-  
-  const navigateToNotifications = () => {
-    navigation.navigate('Notifications');
-    haptics.selection();
-  };
-  
-  const navigateToMessages = () => {
-    navigation.navigate('Messages');
-    haptics.selection();
-  };
-  
-  // Post interaction functions
+  const [activeComments, setActiveComments] = useState<Comment[]>([]);
+  const [activePostId, setActivePostId] = useState<string | null>(null);
+  const bottomSheetModalRef = useRef<BottomSheetModal>(null);
+
   const handleLike = (id: string) => {
     haptics.light();
-    setPosts(prevPosts => 
+    setPosts(prevPosts =>
       prevPosts.map(post => {
         if (post.id === id) {
-          const isLiked = !post.isLiked;
-          const likeDelta = isLiked ? 1 : -1;
           return {
             ...post,
-            isLiked,
-            likes: post.likes + likeDelta
+            isLiked: !post.isLiked,
+            likes: post.isLiked ? post.likes - 1 : post.likes + 1,
           };
         }
         return post;
       })
     );
   };
+
+  // ref
+
+  const handleLikeComment = (commentId: string) => {
+    const newPosts = posts.map(post => {
+      if (post.id !== activePostId) return post;
+
+      const findAndLike = (comments: Comment[]): Comment[] => {
+        return comments.map(comment => {
+          if (comment.id === commentId) {
+            return {
+              ...comment,
+              isLiked: !comment.isLiked,
+              likes: comment.isLiked ? comment.likes - 1 : comment.likes + 1,
+            };
+          }
+          if (comment.replies) {
+            return { ...comment, replies: findAndLike(comment.replies) };
+          }
+          return comment;
+        });
+      };
+
+      const updatedCommentData = findAndLike(post.commentData);
+      setActiveComments(updatedCommentData);
+      return { ...post, commentData: updatedCommentData };
+    });
+
+    setPosts(newPosts);
+  };
+
+  const handleSendComment = (text: string, parentId?: string) => {
+    if (!activePostId) return;
+
+    const newComment: Comment = {
+      id: `c${Date.now()}`,
+      user: { username: 'CurrentUser', profilePicture: 'https://i.pravatar.cc/150?u=a042581f4e29026704d' },
+      text: text,
+      timestamp: 'Just now',
+      likes: 0,
+      isLiked: false,
+      replies: [],
+    };
+
+    const insertReply = (comments: Comment[]): Comment[] => {
+      return comments.map(comment => {
+        if (comment.id === parentId) {
+          // Insert reply at the end of replies array
+          return {
+            ...comment,
+            replies: comment.replies ? [...comment.replies, newComment] : [newComment],
+          };
+        } else if (comment.replies && comment.replies.length > 0) {
+          // Recursively search for the parent in replies
+          return {
+            ...comment,
+            replies: insertReply(comment.replies),
+          };
+        }
+        return comment;
+      });
+    };
+
+    const updatedPosts = posts.map(p => {
+      if (p.id === activePostId) {
+        let newCommentData;
+        if (parentId) {
+          newCommentData = insertReply(p.commentData);
+        } else {
+          newCommentData = [...p.commentData, newComment];
+        }
+        return { ...p, commentData: newCommentData, comments: p.comments + 1 };
+      }
+      return p;
+    });
+
+    setPosts(updatedPosts);
+    const updatedPost = updatedPosts.find(p => p.id === activePostId);
+    if (updatedPost) {
+      setActiveComments(updatedPost.commentData);
+    }
+  };
   
   const handleComment = (id: string) => {
     haptics.light();
-    console.log('Comment pressed for post:', id);
+    const post = posts.find(p => p.id === id);
+    if (post) {
+      setActiveComments(post.commentData);
+      setActivePostId(id);
+      bottomSheetModalRef.current?.present();
+    }
   };
+
+
+
+
+
+
   
   const handleBookmark = (id: string) => {
     haptics.light();
@@ -212,10 +335,10 @@ const HomeScreen = () => {
     if (post) {
       // Navigate to ShareModal with post details
       navigation.navigate('ShareModal', {
-        title: `Post by ${post.username}`,
-        message: post.caption || 'Check out this post!',
-        url: `https://kronolabs.app/posts/${post.id}`,
-        image: post.imageUrl
+        postId: post.id,
+        postContent: post.caption || '',
+        postImage: post.imageUrl,
+        userName: post.username
       });
     }
   };
@@ -253,7 +376,7 @@ const HomeScreen = () => {
     }, 1500);
   };
   
-  const renderPostItem = ({ item }: { item: any }) => (
+  const renderPostItem = ({ item }: { item: Post }) => (
     <PostItem
       post={item}
       onLike={() => handleLike(item.id)}
@@ -281,6 +404,14 @@ const HomeScreen = () => {
     );
   };
   
+  const openDrawer = () => {
+    navigation.dispatch(DrawerActions.openDrawer());
+  };
+
+  const navigateToMessages = () => {
+    navigation.navigate('MainApp', { screen: 'Messages' });
+  };
+
   const renderHeader = () => (
     <View style={styles.header}>
       <TouchableOpacity style={styles.headerLogo} onPress={openDrawer} activeOpacity={0.7}>
@@ -334,36 +465,85 @@ const HomeScreen = () => {
   );
   
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={colors.background} />
+    <GestureHandlerRootView style={{ flex: 1 }}>
       
-      {renderHeader()}
-      
-      <FlatList
-        data={posts}
-        keyExtractor={item => item.id}
-        renderItem={renderPostItem}
-        contentContainerStyle={{ paddingBottom: 20 }}
-        onEndReached={handleLoadMore}
-        onEndReachedThreshold={0.5}
-        ListFooterComponent={isLoadingMore ? renderLoadingSkeleton : null}
-        ListHeaderComponent={<View style={styles.storiesContainer}>
-          <Stories 
-            stories={STORIES} 
-            onStoryPress={handleStoryPress} 
+        <View style={styles.container}>
+          <StatusBar barStyle="light-content" backgroundColor={colors.background} />
+          
+          {renderHeader()}
+          
+          <FlatList
+            data={posts}
+            keyExtractor={item => item.id}
+            renderItem={renderPostItem}
+            contentContainerStyle={{ paddingBottom: 20 }}
+            onEndReached={handleLoadMore}
+            onEndReachedThreshold={0.5}
+            ListFooterComponent={isLoadingMore ? renderLoadingSkeleton : null}
+            ListHeaderComponent={<View style={styles.storiesContainer}>
+              <Stories 
+                stories={STORIES} 
+                onStoryPress={handleStoryPress} 
+              />
+            </View>}
+            refreshControl={
+              <RefreshControl
+                refreshing={isRefreshing}
+                onRefresh={handleRefresh}
+                colors={[colors.primary]}
+                progressBackgroundColor={colors.surface}
+                progressViewOffset={80}
+              />
+            }
           />
-        </View>}
-        refreshControl={
-          <RefreshControl
-            refreshing={isRefreshing}
-            onRefresh={handleRefresh}
-            colors={[colors.primary]}
-            progressBackgroundColor={colors.surface}
-            progressViewOffset={80}
-          />
-        }
-      />
-    </View>
+        </View>
+
+        <BottomSheetModalProvider>
+          <View style={styles.container}>
+            <StatusBar barStyle="light-content" backgroundColor={colors.background} />
+            {renderHeader()}
+            <FlatList
+              data={posts}
+              keyExtractor={item => item.id}
+              renderItem={renderPostItem}
+              contentContainerStyle={{ paddingBottom: 20 }}
+              onEndReached={handleLoadMore}
+              onEndReachedThreshold={0.5}
+              ListFooterComponent={isLoadingMore ? renderLoadingSkeleton : null}
+              ListHeaderComponent={<View style={styles.storiesContainer}>
+                <Stories 
+                  stories={STORIES} 
+                  onStoryPress={handleStoryPress} 
+                />
+              </View>}
+              refreshControl={
+                <RefreshControl
+                  refreshing={isRefreshing}
+                  onRefresh={handleRefresh}
+                  colors={[colors.primary]}
+                  progressBackgroundColor={colors.surface}
+                  progressViewOffset={80}
+                />
+              }
+            />
+            <BottomSheetModal
+              ref={bottomSheetModalRef}
+              index={0}
+              snapPoints={useMemo(() => ['90%'], [])}
+              backgroundStyle={{ backgroundColor: colors.background }}
+              handleIndicatorStyle={{ backgroundColor: colors.surface }}
+              enablePanDownToClose={true}
+            >
+              <CommentsBottomSheet
+                comments={activeComments}
+                onSendComment={handleSendComment}
+                onLikeComment={handleLikeComment}
+                currentUserAvatar={'https://i.pravatar.cc/150?u=a042581f4e29026704d'}
+              />
+            </BottomSheetModal>
+          </View>
+        </BottomSheetModalProvider>
+      </GestureHandlerRootView>
   );
 };
 
@@ -371,6 +551,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.5)',
   },
   header: {
     flexDirection: 'row',

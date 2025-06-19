@@ -126,7 +126,7 @@ const MessagesScreen = () => {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={openDrawer} style={styles.logoContainer}>
-          <Logo size={32} />
+          <Logo size={36} />
         </TouchableOpacity>
         <View style={styles.headerActions}>
           <TouchableOpacity onPress={navigateToNewChat}>

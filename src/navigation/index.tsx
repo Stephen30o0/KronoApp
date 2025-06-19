@@ -1,73 +1,73 @@
 import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import { createStackNavigator } from '@react-navigation/stack';
+
+import { Ionicons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createDrawerNavigator } from '@react-navigation/drawer';
-import { View, TouchableOpacity, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { createStackNavigator } from '@react-navigation/stack';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 // Import COLORS from dedicated colors.js file
 import { COLORS } from '../constants/colors';
 // Import other theme constants
-import { FONTS, SIZES } from '../constants/theme';
 import CustomDrawerContent from '../components/navigation/CustomDrawerContent';
+import { FONTS, SIZES } from '../constants/theme';
 
 // Import navigation types
-import { 
-  RootStackParamList,
+import {
   AuthStackParamList,
-  MainTabParamList,
   DrawerParamList,
-  MessagesStackParamList 
+  MainTabParamList,
+  MessagesStackParamList,
+  RootStackParamList
 } from './types';
 
 // Auth Screens
-import SplashScreen from '../screens/auth/SplashScreen';
+import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
 import GetStartedScreen from '../screens/auth/GetStartedScreen';
 import LoginScreen from '../screens/auth/LoginScreen';
 import RegisterScreen from '../screens/auth/RegisterScreen';
-import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
 
 // Main Screens
-import { HomeScreen } from '../screens/home';
-import PostDetailScreen from '../screens/home/PostDetailScreen';
-import { LibraryScreen } from '../screens/library';
-import { TownSquareScreen } from '../screens/townsquare';
-import { StreamScreen } from '../screens/stream';
-import { ProfileScreen } from '../screens/profile';
-import PostFeedScreen from '../screens/post/PostFeedScreen';
-import { Post } from '../constants/types';
-import { WalletScreen } from '../screens/wallet';
-import { MessagesScreen } from '../screens/messages';
-import ExploreScreen from '../screens/explore/ExploreScreen';
-import UploadScreen from '../screens/upload/UploadScreen';
-import IdeasScreen from '../screens/ideas/IdeasScreen';
-import CreatorDashboardScreen from '../screens/CreatorDashboardScreen';
-import LeaderboardScreen from '../screens/leaderboard/LeaderboardScreen';
 import BookmarksScreen from '../screens/bookmarks/BookmarksScreen';
-import SupportScreen from '../screens/support/SupportScreen';
-import SettingsScreen from '../screens/settings/SettingsScreen';
 import ChatScreen from '../screens/chat/ChatScreen';
-import NotificationsScreen from '../screens/notifications/NotificationsScreen';
-import AddNotificationScreen from '../screens/notifications/AddNotificationScreen';
 import ComicDetailScreen from '../screens/comics/ComicDetailScreen';
 import ComicReaderScreen from '../screens/comics/ComicReaderScreen';
-import ShareModal from '../screens/modals/ShareModal';
+import CommentsScreen from '../screens/comments/CommentsScreen';
+import CreatorDashboardScreen from '../screens/CreatorDashboardScreen';
 import DetailsScreen from '../screens/details/DetailsScreen';
-import HistoryScreen from '../screens/history/HistoryScreen';
+import ExploreScreen from '../screens/explore/ExploreScreen';
 import GoLiveScreen from '../screens/golive/GoLiveScreen';
-import WatchPartyScreen from '../screens/watchparty/WatchPartyScreen';
+import HistoryScreen from '../screens/history/HistoryScreen';
+import { HomeScreen } from '../screens/home';
+import PostDetailScreen from '../screens/home/PostDetailScreen';
+import IdeasScreen from '../screens/ideas/IdeasScreen';
+import LeaderboardScreen from '../screens/leaderboard/LeaderboardScreen';
+import { LibraryScreen } from '../screens/library';
+import { MessagesScreen } from '../screens/messages';
+import ShareModal from '../screens/modals/ShareModal';
+import AddNotificationScreen from '../screens/notifications/AddNotificationScreen';
+import NotificationsScreen from '../screens/notifications/NotificationsScreen';
+import PostFeedScreen from '../screens/post/PostFeedScreen';
+import { ProfileScreen } from '../screens/profile';
+import SettingsScreen from '../screens/settings/SettingsScreen';
 import MainSplashScreen from '../screens/splash/SplashScreen';
+import { StreamScreen } from '../screens/stream';
+import SupportScreen from '../screens/support/SupportScreen';
+import { TownSquareScreen } from '../screens/townsquare';
+import UploadScreen from '../screens/upload/UploadScreen';
+import { WalletScreen } from '../screens/wallet';
+import WatchPartyScreen from '../screens/watchparty/WatchPartyScreen';
 
 // Components
-import InfinityLogo from '../components/common/InfinityLogo';
 import { useAuth } from '../context/AuthContext';
-import NewProjectScreen from '../screens/creator/NewProjectScreen';
 import AnalyticsScreen from '../screens/creator/AnalyticsScreen';
+import NewProjectScreen from '../screens/creator/NewProjectScreen';
 import PayoutsScreen from '../screens/creator/PayoutsScreen';
 import NewChatScreen from '../screens/messages/NewChatScreen';
 
 // Create navigators
 const RootStack = createStackNavigator<RootStackParamList>();
+
+
 const AuthStack = createStackNavigator<AuthStackParamList>();
 const MainTab = createBottomTabNavigator<MainTabParamList>();
 const Drawer = createDrawerNavigator<DrawerParamList>();
@@ -354,6 +354,7 @@ export const RootNavigator = () => {
         // User is signed in
         <>
           <RootStack.Screen name="MainApp" component={DrawerNavigator} />
+          <RootStack.Screen name="Comments" component={CommentsScreen} />
           <RootStack.Screen name="AddNotification" component={AddNotificationScreen} />
           <RootStack.Screen name="ComicDetail" component={ComicDetailScreen} options={{ presentation: 'modal', headerShown: false }} />
           <RootStack.Screen name="ComicReader" component={ComicReaderScreen} options={{ headerShown: false }} />
@@ -407,4 +408,5 @@ const styles = StyleSheet.create({
 });
 
 // Export the navigators
-export { AuthNavigator, MessagesNavigator, MainTabNavigator, DrawerNavigator };
+export { AuthNavigator, DrawerNavigator, MainTabNavigator, MessagesNavigator };
+

@@ -120,67 +120,67 @@ export const FONTS = {
   // Font sizes
   caption: {
     fontFamily: 'System',
-    fontWeight: '400' as const,
+    fontWeight: '900' as const,
     fontSize: 12,
     lineHeight: 16,
   },
   body3: {
     fontFamily: 'System',
-    fontWeight: '400' as const,
+    fontWeight: '900' as const,
     fontSize: 14,
     lineHeight: 20,
   },
   body2: {
     fontFamily: 'System',
-    fontWeight: '400' as const,
+    fontWeight: '900' as const,
     fontSize: 16,
     lineHeight: 24,
   },
   body1: {
     fontFamily: 'System',
-    fontWeight: '400' as const,
+    fontWeight: '900' as const,
     fontSize: 18,
     lineHeight: 26,
   },
   h6: {
     fontFamily: 'System',
-    fontWeight: '600' as const,
+    fontWeight: '900' as const,
     fontSize: 14,
     lineHeight: 20,
   },
   h5: {
     fontFamily: 'System',
-    fontWeight: '600' as const,
+    fontWeight: '900' as const,
     fontSize: 16,
     lineHeight: 24,
   },
   h4: {
     fontFamily: 'System',
-    fontWeight: '600' as const,
+    fontWeight: '900' as const,
     fontSize: 18,
     lineHeight: 26,
   },
   h3: {
     fontFamily: 'System',
-    fontWeight: '700' as const,
+    fontWeight: '900' as const,
     fontSize: 22,
     lineHeight: 30,
   },
   h2: {
     fontFamily: 'System',
-    fontWeight: '700' as const,
+    fontWeight: '900' as const,
     fontSize: 26,
     lineHeight: 32,
   },
   h1: {
     fontFamily: 'System',
-    fontWeight: '700' as const,
+    fontWeight: '900' as const,
     fontSize: 32,
     lineHeight: 38,
   },
   button: {
     fontFamily: 'System',
-    fontWeight: '600' as const,
+    fontWeight: '900' as const,
     fontSize: 16,
   }
 };

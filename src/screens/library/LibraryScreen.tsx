@@ -110,7 +110,7 @@ const LibraryScreen = () => {
         <StatusBar barStyle="light-content" />
         <View style={styles.header}>
           <TouchableOpacity style={styles.logoButton} onPress={() => navigation.dispatch(DrawerActions.openDrawer())}>
-            <Logo size={32} />
+            <Logo size={36} />
           </TouchableOpacity>
           <View style={styles.searchContainer}>
             <Ionicons name="search" size={20} color={COLORS.gray} style={styles.searchIcon} />

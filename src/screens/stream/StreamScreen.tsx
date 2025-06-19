@@ -108,7 +108,7 @@ const StreamScreen = () => {
   const renderHeader = () => (
     <View style={styles.header}>
       <TouchableOpacity onPress={openDrawer} style={styles.headerButton}>
-        <Logo size={32} />
+        <Logo size={36} />
       </TouchableOpacity>
       <View style={styles.searchContainer}>
         <Ionicons name="search" size={20} color={COLORS.textSecondary} style={styles.searchIcon} />

@@ -13,12 +13,11 @@ import type { RootStackParamList } from '../../navigation/types';
 import { COLORS } from '../../constants/colors';
 import { useTheme } from '../../context/ThemeContext';
 import haptics from '../../utils/haptics';
-import ChatboxPopup, { ChatComment } from '../common/ChatboxPopup';
 
 interface Post {
   id: string;
   username: string;
-  avatar: string;
+  avatar?: string;
   caption: string;
   tags?: string[];
   comments: number;
@@ -54,61 +53,6 @@ const PostItem: React.FC<PostItemProps> = ({
   const { username, avatar, caption, comments, likes, timestamp, isLiked, isBookmarked, imageUrl } = post;
 
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
-  const [commentDrawerVisible, setCommentDrawerVisible] = React.useState(false);
-
-  // Mock comments data
-  const [commentsData, setCommentsData] = React.useState<ChatComment[]>([
-    {
-      id: '1',
-      user: 'karennne',
-      avatar: 'https://randomuser.me/api/portraits/women/1.jpg',
-      text: 'This is an amazing shot! Where was this taken?',
-      time: '2h',
-      replies: [
-        {
-          id: '1-1',
-          user: post.username,
-          avatar: post.avatar,
-          text: 'Thank you! This was in the Swiss Alps.',
-          time: '1h',
-        },
-      ],
-    },
-    {
-      id: '2',
-      user: 'john.doe',
-      avatar: 'https://randomuser.me/api/portraits/men/2.jpg',
-      text: 'Love the colors!',
-      time: '1h',
-    },
-  ]);
-
-  const handleSendComment = (text: string, replyToId?: string) => {
-    const newComment: ChatComment = {
-      id: Math.random().toString(),
-      user: 'current_user', // Replace with actual user data
-      avatar: 'https://randomuser.me/api/portraits/men/0.jpg',
-      text,
-      time: 'Just now',
-    };
-
-    if (replyToId) {
-      // Add as a reply
-      const updatedComments = commentsData.map(comment => {
-        if (comment.id === replyToId) {
-          return {
-            ...comment,
-            replies: [...(comment.replies || []), newComment],
-          };
-        }
-        return comment;
-      });
-      setCommentsData(updatedComments);
-    } else {
-      // Add as a new comment
-      setCommentsData([...commentsData, newComment]);
-    }
-  };
 
   const handlePostPress = () => {
     navigation.navigate('PostDetailScreen', { post });
@@ -123,7 +67,6 @@ const PostItem: React.FC<PostItemProps> = ({
   };
 
   const handleCommentPress = () => {
-    setCommentDrawerVisible(true);
     // The onComment prop can be used for analytics or other parent-level actions
     onComment();
   };
@@ -143,12 +86,6 @@ const PostItem: React.FC<PostItemProps> = ({
 
   return (
     <View style={{ backgroundColor: COLORS.background, borderBottomWidth: 1, borderBottomColor: COLORS.divider, marginVertical: 12 }}>
-      <ChatboxPopup 
-        visible={commentDrawerVisible} 
-        onClose={() => setCommentDrawerVisible(false)} 
-        comments={commentsData} 
-        onSend={handleSendComment} 
-      />
       {/* Post header with user info */}
       <View>
         <TouchableOpacity 
