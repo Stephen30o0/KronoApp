@@ -1,33 +1,33 @@
-import React, { useState, useRef, useMemo, useCallback } from 'react';
+import React, { useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  StatusBar,
   FlatList,
   Image,
   Platform,
   RefreshControl,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation, DrawerActions } from '@react-navigation/native';
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
+import { DrawerActions, useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList } from '../../navigation/types';
-import { BottomSheetModal, BottomSheetModalProvider } from '@gorhom/bottom-sheet';
-import CommentsBottomSheet from '../../components/comments/CommentsBottomSheet';
-import { COLORS } from '../../constants/colors';
-import { FONTS } from '../../constants/theme';
+import CommentsPopup, { Comment as PopupComment } from '../../components/common/CommentsPopup';
 import Logo from '../../components/common/Logo';
 import NotificationIcon from '../../components/common/NotificationIcon';
+import { COLORS } from '../../constants/colors';
+import { FONTS } from '../../constants/theme';
+import { RootStackParamList } from '../../navigation/types';
 
-import Stories from '../../components/home/Stories';
-import PostItem from '../../components/home/PostItem';
 import SkeletonLoader from '../../components/common/SkeletonLoader';
-import haptics from '../../utils/haptics';
+import PostItem from '../../components/home/PostItem';
+import Stories from '../../components/home/Stories';
 import { useTheme } from '../../context/ThemeContext';
+import haptics from '../../utils/haptics';
 
 // Define drawer navigation types
 type DrawerParamList = {
@@ -195,10 +195,9 @@ const HomeScreen = () => {
   const { colors } = useTheme();
   const [posts, setPosts] = useState<Post[]>(POSTS);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [activeComments, setActiveComments] = useState<Comment[]>([]);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);  const [activeComments, setActiveComments] = useState<PopupComment[]>([]);
   const [activePostId, setActivePostId] = useState<string | null>(null);
-  const bottomSheetModalRef = useRef<BottomSheetModal>(null);
+  const [isCommentsVisible, setIsCommentsVisible] = useState(false);
 
   const handleLike = (id: string) => {
     haptics.light();
@@ -214,61 +213,28 @@ const HomeScreen = () => {
         return post;
       })
     );
-  };
-
-  // ref
-
-  const handleLikeComment = (commentId: string) => {
-    const newPosts = posts.map(post => {
-      if (post.id !== activePostId) return post;
-
-      const findAndLike = (comments: Comment[]): Comment[] => {
-        return comments.map(comment => {
-          if (comment.id === commentId) {
-            return {
-              ...comment,
-              isLiked: !comment.isLiked,
-              likes: comment.isLiked ? comment.likes - 1 : comment.likes + 1,
-            };
-          }
-          if (comment.replies) {
-            return { ...comment, replies: findAndLike(comment.replies) };
-          }
-          return comment;
-        });
-      };
-
-      const updatedCommentData = findAndLike(post.commentData);
-      setActiveComments(updatedCommentData);
-      return { ...post, commentData: updatedCommentData };
-    });
-
-    setPosts(newPosts);
-  };
-
+  };  // ref
   const handleSendComment = (text: string, parentId?: string) => {
     if (!activePostId) return;
 
-    const newComment: Comment = {
+    const newComment: PopupComment = {
       id: `c${Date.now()}`,
-      user: { username: 'CurrentUser', profilePicture: 'https://i.pravatar.cc/150?u=a042581f4e29026704d' },
-      text: text,
-      timestamp: 'Just now',
+      user: 'CurrentUser',
+      avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026704d',
+      note: text,
+      time: 'Just now',
       likes: 0,
-      isLiked: false,
       replies: [],
     };
 
-    const insertReply = (comments: Comment[]): Comment[] => {
+    const insertReply = (comments: PopupComment[]): PopupComment[] => {
       return comments.map(comment => {
         if (comment.id === parentId) {
-          // Insert reply at the end of replies array
           return {
             ...comment,
             replies: comment.replies ? [...comment.replies, newComment] : [newComment],
           };
         } else if (comment.replies && comment.replies.length > 0) {
-          // Recursively search for the parent in replies
           return {
             ...comment,
             replies: insertReply(comment.replies),
@@ -278,34 +244,52 @@ const HomeScreen = () => {
       });
     };
 
-    const updatedPosts = posts.map(p => {
+    // Convert existing comments and add new one
+    const convertedComments = activeComments.map(c => ({ ...c }));
+    let newCommentData: PopupComment[];
+    
+    if (parentId) {
+      newCommentData = insertReply(convertedComments);
+    } else {
+      newCommentData = [...convertedComments, newComment];
+    }
+
+    setActiveComments(newCommentData);
+    
+    // Update posts count
+    setPosts(prevPosts => prevPosts.map(p => {
       if (p.id === activePostId) {
-        let newCommentData;
-        if (parentId) {
-          newCommentData = insertReply(p.commentData);
-        } else {
-          newCommentData = [...p.commentData, newComment];
-        }
-        return { ...p, commentData: newCommentData, comments: p.comments + 1 };
+        return { ...p, comments: p.comments + 1 };
       }
       return p;
-    });
-
-    setPosts(updatedPosts);
-    const updatedPost = updatedPosts.find(p => p.id === activePostId);
-    if (updatedPost) {
-      setActiveComments(updatedPost.commentData);
-    }
+    }));
   };
-  
+    // Convert home comment format to popup comment format
+  const convertToPopupComments = (comments: Comment[]): PopupComment[] => {
+    return comments.map(comment => ({
+      id: comment.id,
+      user: comment.user.username,
+      avatar: comment.user.profilePicture,
+      note: comment.text,
+      time: comment.timestamp,
+      likes: comment.likes,
+      replies: comment.replies ? convertToPopupComments(comment.replies) : []
+    }));
+  };
+
   const handleComment = (id: string) => {
     haptics.light();
     const post = posts.find(p => p.id === id);
     if (post) {
-      setActiveComments(post.commentData);
+      const convertedComments = convertToPopupComments(post.commentData);
+      setActiveComments(convertedComments);
       setActivePostId(id);
-      bottomSheetModalRef.current?.present();
+      setIsCommentsVisible(true);
     }
+  };
+
+  const handleCloseComments = () => {
+    setIsCommentsVisible(false);
   };
 
 
@@ -463,11 +447,10 @@ const HomeScreen = () => {
       </Text>
     </TouchableOpacity>
   );
-  
-  return (
+    return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      
-        <View style={styles.container}>
+      <BottomSheetModalProvider>
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
           <StatusBar barStyle="light-content" backgroundColor={colors.background} />
           
           {renderHeader()}
@@ -476,17 +459,18 @@ const HomeScreen = () => {
             data={posts}
             keyExtractor={item => item.id}
             renderItem={renderPostItem}
-            contentContainerStyle={{ paddingBottom: 20 }}
+            contentContainerStyle={styles.flatListContent}
             onEndReached={handleLoadMore}
             onEndReachedThreshold={0.5}
             ListFooterComponent={isLoadingMore ? renderLoadingSkeleton : null}
-            ListHeaderComponent={<View style={styles.storiesContainer}>
-              <Stories 
-                stories={STORIES} 
-                onStoryPress={handleStoryPress} 
-              />
-            </View>}
-            refreshControl={
+            ListHeaderComponent={
+              <View style={styles.storiesContainer}>
+                <Stories 
+                  stories={STORIES} 
+                  onStoryPress={handleStoryPress} 
+                />
+              </View>
+            }            refreshControl={
               <RefreshControl
                 refreshing={isRefreshing}
                 onRefresh={handleRefresh}
@@ -495,55 +479,18 @@ const HomeScreen = () => {
                 progressViewOffset={80}
               />
             }
+            showsVerticalScrollIndicator={false}
           />
         </View>
-
-        <BottomSheetModalProvider>
-          <View style={styles.container}>
-            <StatusBar barStyle="light-content" backgroundColor={colors.background} />
-            {renderHeader()}
-            <FlatList
-              data={posts}
-              keyExtractor={item => item.id}
-              renderItem={renderPostItem}
-              contentContainerStyle={{ paddingBottom: 20 }}
-              onEndReached={handleLoadMore}
-              onEndReachedThreshold={0.5}
-              ListFooterComponent={isLoadingMore ? renderLoadingSkeleton : null}
-              ListHeaderComponent={<View style={styles.storiesContainer}>
-                <Stories 
-                  stories={STORIES} 
-                  onStoryPress={handleStoryPress} 
-                />
-              </View>}
-              refreshControl={
-                <RefreshControl
-                  refreshing={isRefreshing}
-                  onRefresh={handleRefresh}
-                  colors={[colors.primary]}
-                  progressBackgroundColor={colors.surface}
-                  progressViewOffset={80}
-                />
-              }
-            />
-            <BottomSheetModal
-              ref={bottomSheetModalRef}
-              index={0}
-              snapPoints={useMemo(() => ['90%'], [])}
-              backgroundStyle={{ backgroundColor: colors.background }}
-              handleIndicatorStyle={{ backgroundColor: colors.surface }}
-              enablePanDownToClose={true}
-            >
-              <CommentsBottomSheet
-                comments={activeComments}
-                onSendComment={handleSendComment}
-                onLikeComment={handleLikeComment}
-                currentUserAvatar={'https://i.pravatar.cc/150?u=a042581f4e29026704d'}
-              />
-            </BottomSheetModal>
-          </View>
-        </BottomSheetModalProvider>
-      </GestureHandlerRootView>
+      </BottomSheetModalProvider>
+      
+      <CommentsPopup
+        visible={isCommentsVisible}
+        onClose={handleCloseComments}
+        comments={activeComments}
+        onSend={handleSendComment}
+      />
+    </GestureHandlerRootView>
   );
 };
 
@@ -588,11 +535,10 @@ const styles = StyleSheet.create({
   headerIconButton: {
     marginLeft: 16,
   },
-  
-  // Stories styles
+    // Stories styles
   storiesContainer: {
     paddingVertical: 10,
-    borderBottomWidth: 0,
+    marginBottom: 8,
   },
   storiesList: {
     paddingHorizontal: 12,
@@ -750,12 +696,14 @@ const styles = StyleSheet.create({
     color: COLORS.textTertiary,
     marginTop: 8,
     fontSize: 12,
-  },
-  emptyText: {
+  },  emptyText: {
     ...FONTS.body1,
     textAlign: 'center',
     marginTop: 40,
     marginHorizontal: 20,
+  },
+  flatListContent: {
+    paddingBottom: 20,
   },
 });
 

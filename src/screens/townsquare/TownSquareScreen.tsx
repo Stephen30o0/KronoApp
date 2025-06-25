@@ -3,22 +3,22 @@ import { DrawerActions, useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useRef, useState } from 'react';
 import {
-  Animated,
-  Dimensions,
-  FlatList,
-  Image,
-  Modal,
-  SafeAreaView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
+    Animated,
+    Dimensions,
+    FlatList,
+    Image,
+    Modal,
+    SafeAreaView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from 'react-native';
 import * as Animatable from 'react-native-animatable';
+import CommentsPopup, { Comment } from '../../components/common/CommentsPopup';
 import Logo from '../../components/common/Logo';
 import NotificationIcon from '../../components/common/NotificationIcon';
-import CommentsPopup, { Comment } from '../../components/common/CommentsPopup';
 import { COLORS, FONTS, SHADOWS, SIZES } from '../../constants/theme';
 
 const { width } = Dimensions.get('window');
@@ -439,34 +439,28 @@ const TownSquareScreen = () => {
       </Text>
     </TouchableOpacity>
   );
-
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <CommentsPopup
-        visible={isCommentsVisible}
-        onClose={handleCloseComments}
-        comments={activeComments}
-        onSend={handleSendComment}
-      />
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={openDrawer} style={styles.headerLogo}>
-          <Logo size={36} />
-          <Text style={styles.logoText}>KronoLabs</Text>
-        </TouchableOpacity>
+    <>
+      <SafeAreaView style={styles.safeArea}>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={openDrawer} style={styles.headerLogo}>
+            <Logo size={36} />
+            <Text style={styles.logoText}>KronoLabs</Text>
+          </TouchableOpacity>
 
-        <View style={styles.searchContainer}>
-          <Ionicons name="search" size={20} color={COLORS.textSecondary} style={styles.searchIcon} />
-          <TextInput
-            placeholder="Search ideas..."
-            placeholderTextColor={COLORS.textSecondary}
-            style={styles.searchInput}
-          />
+          <View style={styles.searchContainer}>
+            <Ionicons name="search" size={20} color={COLORS.textSecondary} style={styles.searchIcon} />
+            <TextInput
+              placeholder="Search ideas..."
+              placeholderTextColor={COLORS.textSecondary}
+              style={styles.searchInput}
+            />
+          </View>
+          <TouchableOpacity style={styles.notificationButton}>
+            <NotificationIcon size={28} color={COLORS.primary} />
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity style={styles.notificationButton}>
-          <NotificationIcon size={28} color={COLORS.primary} />
-        </TouchableOpacity>
-      </View>
 
       {/* Genre and Sort selectors */}
       <View style={styles.genreSortRow}>
@@ -674,9 +668,16 @@ const TownSquareScreen = () => {
               <Text style={styles.adText}>(This is a 5-second simulation)</Text>
             </View>
           </View>
-        </Modal>
-      )}
-    </SafeAreaView>
+        </Modal>        )}
+      </SafeAreaView>
+      
+      <CommentsPopup
+        visible={isCommentsVisible}
+        onClose={handleCloseComments}
+        comments={activeComments}
+        onSend={handleSendComment}
+      />
+    </>
   );
 };
 

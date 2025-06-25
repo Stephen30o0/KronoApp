@@ -1,19 +1,19 @@
-import React, { useState, useRef, useEffect } from 'react';
-import {
-  View,
-  StyleSheet,
-  FlatList,
-  TouchableOpacity,
-  Dimensions,
-} from 'react-native';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
+import React, { useEffect, useRef, useState } from 'react';
+import {
+    Dimensions,
+    FlatList,
+    StyleSheet,
+    TouchableOpacity,
+    View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Post, Comment } from '../../constants/types';
-import { COLORS } from '../../constants/theme';
-import PostItem from '../../components/home/PostItem';
 import CommentsPopup from '../../components/common/CommentsPopup';
+import PostItem from '../../components/home/PostItem';
+import { COLORS } from '../../constants/theme';
+import { Comment, Post } from '../../constants/types';
 import { RootStackParamList } from '../../navigation/types';
 
 const { height } = Dimensions.get('window');
@@ -99,15 +99,15 @@ const PostFeedScreen = () => {
   const handleShare = (postId: string) => {
     console.log(`Shared post ${postId}`);
   };
-
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={28} color={COLORS.textPrimary} />
-        </TouchableOpacity>
-      </View>
-      <FlatList
+    <>
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={28} color={COLORS.textPrimary} />
+          </TouchableOpacity>
+        </View>
+        <FlatList
         ref={flatListRef}
         data={posts}
         renderItem={({ item }) => (
@@ -121,12 +121,13 @@ const PostFeedScreen = () => {
         )}
         keyExtractor={item => item.id}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.listContainer}
-        getItemLayout={(data, index) => (
+        contentContainerStyle={styles.listContainer}        getItemLayout={(data, index) => (
           { length: height * 0.8, offset: height * 0.8 * index, index }
         )}
         initialScrollIndex={startIndex}
       />
+      </SafeAreaView>
+      
       {activePost && (
         <CommentsPopup
           visible={isCommentsVisible}
@@ -135,7 +136,7 @@ const PostFeedScreen = () => {
           onSend={handleSendComment}
         />
       )}
-    </SafeAreaView>
+    </>
   );
 };
 

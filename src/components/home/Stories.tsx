@@ -1,18 +1,18 @@
+import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  TouchableOpacity,
-  Image,
-  Dimensions,
+    Dimensions,
+    FlatList,
+    Image,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 // Import COLORS from dedicated colors.js file
 import { COLORS } from '../../constants/colors';
 // Import other theme constants
-import { FONTS, SIZES } from '../../constants/theme';
+import { FONTS } from '../../constants/theme';
 import { useTheme } from '../../context/ThemeContext';
 
 const { width } = Dimensions.get('window');
@@ -133,23 +133,23 @@ const Stories: React.FC<StoriesProps> = ({ stories, onStoryPress, colors: propCo
 const styles = StyleSheet.create({
   storiesContainer: {
     paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.divider,
+    backgroundColor: COLORS.background,
   },
   storiesList: {
     paddingHorizontal: 12,
   },
   storyItem: {
     marginHorizontal: 6,
-    width: 100,
+    width: 90,
   },
   storyContainer: {
     borderRadius: 12,
     backgroundColor: COLORS.surface,
-    height: 160,
+    height: 140,
     borderWidth: 2,
     overflow: 'hidden',
     position: 'relative',
+    width: 90,
   },
   activeStoryContainer: {
     borderColor: COLORS.primary,
@@ -177,13 +177,13 @@ const styles = StyleSheet.create({
     left: 8,
     borderWidth: 2,
     borderColor: COLORS.primary,
-    borderRadius: 20,
+    borderRadius: 18,
     padding: 2,
   },
   storyAvatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     backgroundColor: COLORS.backgroundLight,
     overflow: 'hidden',
     justifyContent: 'center',
@@ -204,45 +204,48 @@ const styles = StyleSheet.create({
     ...FONTS.caption,
     color: COLORS.primary,
     fontWeight: 'bold',
+    fontSize: 10,
   },
   storyUsername: {
     ...FONTS.caption,
     marginTop: 4,
     fontSize: 11,
     textAlign: 'center',
-    width: 80, // Fixed width instead of using SIZES.storySize
+    width: 90,
   },
   addStoryButton: {
     position: 'absolute',
     bottom: -4,
     right: -4,
+    backgroundColor: COLORS.primary,
     borderRadius: 10,
-    width: 20,
-    height: 20,
+    width: 18,
+    height: 18,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1.5,
-    borderColor: 'white',
+    borderColor: COLORS.background,
   },
   yourStoryContainer: {
-    width: 100,
+    width: 90,
     marginHorizontal: 6,
   },
   yourStoryContent: {
     borderRadius: 12,
     backgroundColor: COLORS.surface,
-    height: 160,
+    height: 140,
     borderWidth: 2,
     borderColor: COLORS.divider,
     overflow: 'hidden',
     position: 'relative',
     justifyContent: 'center',
     alignItems: 'center',
+    width: 90,
   },
   yourStoryAvatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: COLORS.backgroundLight,
     overflow: 'hidden',
     justifyContent: 'center',
@@ -255,6 +258,7 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
     textAlign: 'center',
     marginTop: 4,
+    fontSize: 10,
   },
 });
 

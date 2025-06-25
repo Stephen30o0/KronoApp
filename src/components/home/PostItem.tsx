@@ -1,17 +1,17 @@
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
-import {
-  Image,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
-import type { RootStackParamList } from '../../navigation/types';
+import React from 'react';
+import {
+    Image,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native';
 import { COLORS } from '../../constants/colors';
 import { useTheme } from '../../context/ThemeContext';
+import type { RootStackParamList } from '../../navigation/types';
 import haptics from '../../utils/haptics';
 
 interface Post {
@@ -82,99 +82,181 @@ const PostItem: React.FC<PostItemProps> = ({
     }
   };
 
-
-
   return (
-    <View style={{ backgroundColor: COLORS.background, borderBottomWidth: 1, borderBottomColor: COLORS.divider, marginVertical: 12 }}>
+    <View style={[styles.postContainer, { backgroundColor: colors.background }]}>
       {/* Post header with user info */}
-      <View>
+      <View style={styles.postHeader}>
         <TouchableOpacity 
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-          }}
+          style={styles.userInfo}
           onPress={() => onProfilePress && onProfilePress(username)}
         >
-          <View>
+          <View style={styles.avatarContainer}>
             {avatar ? (
-              <Image source={{ uri: avatar }} style={{ width: 40, height: 40, borderRadius: 20 }} />
+              <Image source={{ uri: avatar }} style={styles.avatar} />
             ) : (
-              <View style={{ width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.surface }}>
-                <Text style={{ color: COLORS.primary }}>
+              <View style={[styles.avatarPlaceholder, { backgroundColor: colors.surface }]}>
+                <Text style={[styles.avatarText, { color: colors.primary }]}>
                   {username.charAt(0).toUpperCase()}
                 </Text>
               </View>
             )}
           </View>
-          <View style={{ marginLeft: 12 }}>
-            <Text style={{ color: COLORS.textPrimary }}>{username}</Text>
-            <Text style={{ color: COLORS.textTertiary }}>{timestamp}</Text>
+          <View style={styles.userDetails}>
+            <Text style={[styles.username, { color: colors.textPrimary }]}>{username}</Text>
+            <Text style={[styles.timestamp, { color: colors.textTertiary }]}>{timestamp}</Text>
           </View>
         </TouchableOpacity>
-
-        {/* Post image */}
-        {imageUrl && (
-          <Image source={{ uri: imageUrl }} style={styles.postImage} />
-        )} 
-
-        {/* Post caption */}
-        {caption && (
-          <Text style={{ color: COLORS.textPrimary, marginTop: 8, marginLeft: 12 }}>{caption}</Text>
-        )}
-
-        {/* Post tags */}
-        {post.tags && post.tags.length > 0 && (
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 4, marginLeft: 12 }}>
-            {post.tags.map((tag, index) => (
-              <Text key={index} style={{ color: COLORS.primary, marginRight: 8 }}>#{tag}</Text>
-            ))}
-          </View>
-        )}
-
-        {/* Post Actions row with counts */}
-        <View style={[styles.actionsRow, { flexDirection: 'row', alignItems: 'center', marginTop: 6 }]}> 
-          {/* Like button and count */}
-          <TouchableOpacity onPress={handleLike} style={{ flexDirection: 'row', alignItems: 'center', marginRight: 6 }}>
-            <Ionicons name={isLiked ? "heart" : "heart-outline"} size={22} color={isLiked ? COLORS.error : COLORS.textPrimary} />
-          </TouchableOpacity>
-          <Text style={{ color: COLORS.textPrimary, marginRight: 12 }}>{likes}</Text>
-
-          {/* Comment button and count */}
-          <TouchableOpacity onPress={handleCommentPress} style={{ flexDirection: 'row', alignItems: 'center', marginRight: 6 }}>
-            <Ionicons name="chatbubble" size={22} color={COLORS.textPrimary} />
-          </TouchableOpacity>
-          <Text style={{ color: COLORS.textPrimary, marginRight: 12 }}>{comments}</Text>
-
-          {/* Share button */}
-          <TouchableOpacity onPress={handleSharePress} style={{ flexDirection: 'row', alignItems: 'center', marginRight: 12 }}>
-            <Ionicons name="share-social" size={22} color={COLORS.textPrimary} />
-          </TouchableOpacity>
-
-          {/* Bookmark button */}
-          <TouchableOpacity onPress={handleBookmark} style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Ionicons name={isBookmarked ? "bookmark" : "bookmark-outline"} size={22} color={isBookmarked ? COLORS.primary : COLORS.textPrimary} />
-          </TouchableOpacity>
-        </View>
       </View>
+
+      {/* Post image */}
+      {imageUrl && (
+        <View style={styles.imageContainer}>
+          <Image source={{ uri: imageUrl }} style={styles.postImage} />
+        </View>
+      )} 
+
+      {/* Post Actions row with counts */}
+      <View style={styles.actionsRow}> 
+        {/* Like button and count */}
+        <TouchableOpacity onPress={handleLike} style={styles.actionButton}>
+          <Ionicons 
+            name={isLiked ? "heart" : "heart-outline"} 
+            size={22} 
+            color={isLiked ? COLORS.error : colors.textPrimary} 
+          />
+          <Text style={[styles.actionText, { color: colors.textPrimary }]}>{likes}</Text>
+        </TouchableOpacity>
+
+        {/* Comment button and count */}
+        <TouchableOpacity onPress={handleCommentPress} style={styles.actionButton}>
+          <Ionicons name="chatbubble-outline" size={22} color={colors.textPrimary} />
+          <Text style={[styles.actionText, { color: colors.textPrimary }]}>{comments}</Text>
+        </TouchableOpacity>
+
+        {/* Share button */}
+        <TouchableOpacity onPress={handleSharePress} style={styles.actionButton}>
+          <Ionicons name="share-social-outline" size={22} color={colors.textPrimary} />
+        </TouchableOpacity>
+
+        {/* Spacer to push bookmark to the right */}
+        <View style={{ flex: 1 }} />
+
+        {/* Bookmark button */}
+        <TouchableOpacity onPress={handleBookmark} style={styles.actionButton}>
+          <Ionicons 
+            name={isBookmarked ? "bookmark" : "bookmark-outline"} 
+            size={22} 
+            color={isBookmarked ? colors.primary : colors.textPrimary} 
+          />
+        </TouchableOpacity>
+      </View>
+
+      {/* Post caption - moved below actions */}
+      {caption && (
+        <Text style={[styles.caption, { color: colors.textPrimary }]}>{caption}</Text>
+      )}
+
+      {/* Post tags - moved below caption */}
+      {post.tags && post.tags.length > 0 && (
+        <View style={styles.tagsContainer}>
+          {post.tags.map((tag, index) => (
+            <Text key={index} style={[styles.tag, { color: colors.primary }]}>
+              #{tag.replace('#', '')}
+            </Text>
+          ))}
+        </View>
+      )}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+  postContainer: {
+    backgroundColor: COLORS.background,
+    marginBottom: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  postHeader: {
+    marginBottom: 12,
+  },
+  userInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  avatarContainer: {
+    marginRight: 12,
+  },
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+  },
+  avatarPlaceholder: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  avatarText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  userDetails: {
+    flex: 1,
+  },
+  username: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  timestamp: {
+    fontSize: 12,
+    opacity: 0.7,
+  },  caption: {
+    fontSize: 14,
+    lineHeight: 20,
+    marginTop: 12,
+    marginBottom: 8,
+  },
+  tagsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 4,
+    marginBottom: 8,
+  },
+  tag: {
+    fontSize: 14,
+    marginRight: 8,
+    marginBottom: 4,
+  },  imageContainer: {
+    marginBottom: 8,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
   postImage: {
     width: '100%',
     height: 240,
     resizeMode: 'cover',
-    borderRadius: 12,
-    marginBottom: 8,
   },
   actionsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-start', // Left align
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    marginTop: 6, // Reduced spacing above action buttons
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.divider,
+  },
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 16,
+    paddingVertical: 4,
+  },
+  actionText: {
+    fontSize: 14,
+    marginLeft: 6,
+    fontWeight: '500',
   },
 });
 

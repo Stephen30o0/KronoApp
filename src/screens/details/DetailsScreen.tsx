@@ -1,21 +1,21 @@
+import { Ionicons } from '@expo/vector-icons';
+import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { ResizeMode, Video } from 'expo-av';
 import React, { useRef, useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Dimensions,
+    Dimensions,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
-import { Video, ResizeMode } from 'expo-av';
-import { Ionicons } from '@expo/vector-icons';
 
+import CommentsPopup, { Comment } from '../../components/common/CommentsPopup';
 import { COLORS, FONTS, SIZES } from '../../constants/theme';
 import { RootStackParamList } from '../../navigation/types';
-import CommentsPopup, { Comment } from '../../components/common/CommentsPopup';
 
 const { width, height } = Dimensions.get('window');
 
@@ -99,16 +99,10 @@ const DetailsScreen = () => {
 
   // In a real app, you'd fetch this data based on streamId
   const stream = mockStreamDetails;
-
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <CommentsPopup
-        visible={isCommentsVisible}
-        onClose={handleCloseComments}
-        comments={comments}
-        onSend={handleSendComment}
-      />
-      <ScrollView style={styles.container}>
+    <>
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
+        <ScrollView style={styles.container}>
         <View style={styles.videoContainer}>
           <Video
             ref={videoRef}
@@ -207,11 +201,18 @@ const DetailsScreen = () => {
                     <Ionicons name="download-outline" size={24} color={COLORS.textSecondary} />
                 </View>
             </TouchableOpacity>
-          ))}
-        </View>
+          ))}        </View>
       </ScrollView>
     </SafeAreaView>
-  );
+    
+    <CommentsPopup
+      visible={isCommentsVisible}
+      onClose={handleCloseComments}
+      comments={comments}
+      onSend={handleSendComment}
+    />
+  </>
+);
 };
 
 // --- Styles ---

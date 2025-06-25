@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
-import { useTheme } from '../../context/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
+import React, { useState } from 'react';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useTheme } from '../../context/ThemeContext';
 
 export type Comment = {
   id: string;
@@ -25,117 +25,211 @@ interface CommentItemProps {
 
 const CommentItem = ({ comment, onLike, onReply, isReply = false }: CommentItemProps) => {
   const { colors } = useTheme();
+  const [showReplies, setShowReplies] = useState(false);
 
+  const handleLike = () => {
+    onLike(comment.id);
+  };
+
+  const handleReply = () => {
+    onReply(comment.id, comment.user.username);
+  };
+
+  const toggleReplies = () => {
+    setShowReplies(!showReplies);
+  };
+
+  const formatTimestamp = (timestamp: string) => {
+    // Simple formatting - you can enhance this based on your needs
+    return timestamp;
+  };
 
   const styles = StyleSheet.create({
     container: {
       flexDirection: 'row',
-      paddingVertical: 10,
-      paddingRight: 10,
-      paddingLeft: isReply ? 30 : 10, // Indent replies
-      marginLeft: isReply ? 20 : 0,
-      borderLeftWidth: isReply ? 2 : 0,
-      borderLeftColor: colors.surface,
+      paddingVertical: 8,
+      marginLeft: isReply ? 44 : 0,
     },
     avatar: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
-      marginRight: 10,
+      width: isReply ? 32 : 36,
+      height: isReply ? 32 : 36,
+      borderRadius: isReply ? 16 : 18,
+      marginRight: 12,
     },
-    commentContainer: {
+    contentContainer: {
       flex: 1,
     },
-    commentHeader: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginBottom: 3,
+    commentBubble: {
+      backgroundColor: colors.surface,
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      borderRadius: 20,
+      borderTopLeftRadius: isReply ? 20 : 4,
+      marginBottom: 8,
     },
-    username: {
-      fontWeight: 'bold',
+    usernameText: {
+      fontSize: 14,
+      fontWeight: '700',
       color: colors.textPrimary,
-      marginRight: 8,
-    },
-    timestamp: {
-      color: colors.textSecondary,
-      fontSize: 12,
+      marginBottom: 2,
     },
     commentText: {
+      fontSize: 15,
       color: colors.textPrimary,
+      lineHeight: 20,
+    },    actionsContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 4,
+      justifyContent: 'space-between',
+      marginTop: 4,
     },
-    commentActions: {
-      marginTop: 8,
+    actionsLeft: {
       flexDirection: 'row',
       alignItems: 'center',
     },
-    replyButton: {
+    timestamp: {
+      fontSize: 12,
       color: colors.textSecondary,
-      fontSize: 13,
-      fontWeight: '500',
-    },
-    likesContainer: {
+      marginRight: 20,
+    },    actionButton: {
+      flexDirection: 'row',
       alignItems: 'center',
-      marginLeft: 16,
-      paddingTop: 5,
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      borderRadius: 16,
+      backgroundColor: colors.surface,
+      minWidth: 70,
+      justifyContent: 'center',
+      marginLeft: 12,
+    },
+    actionText: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: colors.textSecondary,
+      marginLeft: 6,
+    },
+    likeButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      borderRadius: 16,
+      backgroundColor: colors.surface,
+      minWidth: 60,
+      justifyContent: 'center',
     },
     likeCount: {
+      fontSize: 13,
+      fontWeight: '600',
       color: colors.textSecondary,
-      fontSize: 12,
-      marginTop: 2,
       marginLeft: 4,
+    },
+    likeCountActive: {
+      color: '#FF3040',
     },
     viewRepliesButton: {
       flexDirection: 'row',
       alignItems: 'center',
-      marginTop: 10,
+      paddingHorizontal: 4,
+      paddingVertical: 8,
+      marginTop: 4,
     },
-    line: {
+    repliesLine: {
       width: 24,
       height: 1,
       backgroundColor: colors.textSecondary,
+      opacity: 0.3,
       marginRight: 8,
     },
     viewRepliesText: {
+      fontSize: 13,
+      fontWeight: '600',
       color: colors.textSecondary,
-      fontWeight: 'bold',
     },
     repliesContainer: {
-      marginTop: 10,
+      marginTop: 8,
+      paddingLeft: isReply ? 0 : 8,
+    },
+    replyIndicator: {
+      position: 'absolute',
+      left: -12,
+      top: 0,
+      bottom: 0,
+      width: 2,
+      backgroundColor: colors.surface,
+      borderRadius: 1,
     },
   });
 
   const hasReplies = comment.replies && comment.replies.length > 0;
+  const isEmojiOnly = /^[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]+$/u.test(comment.text.trim());
 
   return (
     <View>
       <View style={styles.container}>
+        {isReply && <View style={styles.replyIndicator} />}
+        
         <Image source={{ uri: comment.user.profilePicture }} style={styles.avatar} />
-        <View style={styles.commentContainer}>
-          <View style={styles.commentHeader}>
-            <Text style={styles.username}>{comment.user.username}</Text>
-            <Text style={styles.timestamp}>{comment.timestamp}</Text>
+        
+        <View style={styles.contentContainer}>
+          {isEmojiOnly ? (
+            // Render emoji-only comments larger and without bubble
+            <View style={{ paddingVertical: 4 }}>
+              <Text style={styles.usernameText}>{comment.user.username}</Text>
+              <Text style={{ fontSize: 24, lineHeight: 28 }}>{comment.text}</Text>
+            </View>
+          ) : (
+            // Regular comment bubble
+            <View style={styles.commentBubble}>
+              <Text style={styles.usernameText}>{comment.user.username}</Text>
+              <Text style={styles.commentText}>{comment.text}</Text>
+            </View>
+          )}
+            <View style={styles.actionsContainer}>
+            <View style={styles.actionsLeft}>
+              <Text style={styles.timestamp}>{formatTimestamp(comment.timestamp)}</Text>
+            </View>
+            
+            <View style={styles.actionsLeft}>
+              <TouchableOpacity style={styles.likeButton} onPress={handleLike}>
+                <Ionicons 
+                  name={comment.isLiked ? "heart" : "heart-outline"} 
+                  size={16} 
+                  color={comment.isLiked ? '#FF3040' : colors.textSecondary} 
+                />
+                {comment.likes > 0 && (
+                  <Text style={[styles.likeCount, comment.isLiked && styles.likeCountActive]}>
+                    {comment.likes}
+                  </Text>
+                )}
+              </TouchableOpacity>
+              
+              <TouchableOpacity style={styles.actionButton} onPress={handleReply}>
+                <Ionicons name="chatbubble-outline" size={14} color={colors.textSecondary} />
+                <Text style={styles.actionText}>Reply</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
 
-          </View>
-          <Text style={styles.commentText}>{comment.text}</Text>
-          <View style={styles.commentActions}>
-            <TouchableOpacity onPress={() => onReply(comment.id, comment.user.username)}>
-              <Text style={styles.replyButton}>Reply</Text>
+          {hasReplies && (
+            <TouchableOpacity style={styles.viewRepliesButton} onPress={toggleReplies}>
+              <View style={styles.repliesLine} />
+              <Text style={styles.viewRepliesText}>
+                {showReplies ? 'Hide' : 'View'} {comment.replies!.length} {comment.replies!.length === 1 ? 'reply' : 'replies'}
+              </Text>
+              <Ionicons 
+                name={showReplies ? "chevron-up" : "chevron-down"} 
+                size={14} 
+                color={colors.textSecondary} 
+                style={{ marginLeft: 4 }}
+              />
             </TouchableOpacity>
-          </View>
-        </View>
-        <View style={styles.likesContainer}>
-          <TouchableOpacity onPress={() => onLike(comment.id)}>
-            <Ionicons 
-              name={comment.isLiked ? "heart" : "heart-outline"} 
-              size={20} 
-              color={comment.isLiked ? 'red' : colors.textSecondary} 
-            />
-          </TouchableOpacity>
-          {comment.likes > 0 && <Text style={styles.likeCount}>{comment.likes}</Text>}
+          )}
         </View>
       </View>
 
-      {hasReplies && comment.replies && (
+      {hasReplies && showReplies && comment.replies && (
         <View style={styles.repliesContainer}>
           {comment.replies.map(reply => (
             <CommentItem
@@ -143,7 +237,7 @@ const CommentItem = ({ comment, onLike, onReply, isReply = false }: CommentItemP
               comment={reply}
               onLike={onLike}
               onReply={onReply}
-              isReply={true} // Always indent only one level for all replies
+              isReply={true}
             />
           ))}
         </View>
